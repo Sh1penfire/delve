@@ -5,6 +5,7 @@ import main.blocks.Vacuum;
 import main.blocks.WallBlaster;
 import main.blocks.crafters.RandomDumperBlock;
 import main.blocks.crafters.RecipeCrafter;
+import main.blocks.distrib.DelveConveyorBlock;
 import main.blocks.distrib.DelveGraphBlock;
 import main.content.DelveAspects;
 import mindustry.content.Liquids;
@@ -15,7 +16,7 @@ import mindustry.world.Block;
 public class DelveProdBlocks {
     public static Block blaster, vacuum, beamer, gasKiln;
 
-    public static DelveGraphBlock graph;
+    public static DelveConveyorBlock graph;
 
     public static void load(){
 
@@ -46,7 +47,7 @@ public class DelveProdBlocks {
             size = 2;
         }};
 
-        graph = new DelveGraphBlock("graph-block"){{
+        graph = new DelveConveyorBlock("conveyor-block"){{
             requirements(Category.production, ItemStack.with());
             size = 1;
         }};

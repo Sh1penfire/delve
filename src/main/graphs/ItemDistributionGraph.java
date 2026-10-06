@@ -19,6 +19,7 @@ import mindustry.content.Fx;
 import mindustry.gen.Building;
 import mindustry.graphics.Layer;
 
+//A directional tree with an edge case for loops which stores and moves item states
 public class ItemDistributionGraph {
 
     public ItemDistributionGraph(DelveGraphBlock.DelveGraphBuild root){

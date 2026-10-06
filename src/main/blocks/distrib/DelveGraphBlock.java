@@ -31,7 +31,7 @@ public class DelveGraphBlock extends Block {
                 if(front != null && back != null){
                     //join
                     front.graph.addBuilding(this, front, front.vertex);
-                    front.graph.attach(back.graph, this, front, front.vertex);
+                    //front.graph.attach(back.graph, this, front, front.vertex);
                 }
                 if(front != null){
                     front.graph.addBuilding(this, front, front.vertex);
