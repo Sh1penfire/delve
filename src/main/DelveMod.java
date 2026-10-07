@@ -42,9 +42,10 @@ public class DelveMod extends Mod{
     @Override
     public void init() {
         super.init();
-
         Vars.mods.getScripts().runConsole(
                 "function buildWorldP(){return Vars.world.buildWorld(Vars.player.x, Vars.player.y)}");
+        Vars.mods.getScripts().runConsole(
+                "function s(){build.graph.handleEntry(build.node.toHighway, DelveItems.shadesteel.constructor.get())}");
         ImporterTopLevel scope = (ImporterTopLevel) Vars.mods.getScripts().scope;
 
         Seq<String> packages = Seq.with(

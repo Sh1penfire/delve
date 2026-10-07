@@ -11,6 +11,9 @@ import mindustry.game.EventType;
 import mindustry.type.Item;
 
 public class DelveItem extends Item {
+
+    public static float defaultSize = 4;
+
     public int altNames = 0;
     public float nameSwitchChance = 0.001f;
     @Nullable public String altNamePrefix;
@@ -18,7 +21,7 @@ public class DelveItem extends Item {
 
     public int size = 4;
 
-    public Prov<ConveyorGraph.ConveyorEntry> itemState = () -> new CustomConveyorEntry(this, size);
+    public Prov<ConveyorGraph.ConveyorEntry> constructor = () -> new CustomConveyorEntry(this, size);
 
     public void update(float x, float y){
 
@@ -37,14 +40,15 @@ public class DelveItem extends Item {
         }
 
         @Override
-        public void update() {
-            super.update();
+        public void update(float x, float y) {
+            super.update(x, y);
             item.update(x, y);
         }
     }
 
     public DelveItem(String name, Color color) {
         super(name, color);
+        ItemEntryIDMap.put(this, constructor);
     }
 
     @Override

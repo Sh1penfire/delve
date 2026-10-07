@@ -16,6 +16,7 @@ import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.content.Items;
 import mindustry.gen.Building;
+import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.type.Item;
 
@@ -235,46 +236,76 @@ public class ConveyorGraph {
 
 
     public static float drawLayer = Layer.endPixeled;
-    ConveyorEntry current;
+    ConveyorEntry nextEntry;
 
     //Move an entry along a highway, returning any remaining distance
     //Will move entries into and past intersections
-    public float moveState(ConveyorEntry entry, Highway highway, boolean front, float remainingDistance){
+    public float moveState(ConveyorEntry entry, Highway highway, boolean front, boolean back, float remainingDistance){
         //Find how far it should be from the front of the chain
         float targDist = 0;
 
         //If this isn't the front most entry, then offset the target distance by the front state's size + this state's size / 2
         if(!front) {
-            current = entry.next;
-            targDist = (current.size + current.next.size) / 2;
+            nextEntry = entry.next;
+            targDist = (entry.size + nextEntry.size) / 2;
         }
 
         //Move
-        current.distToFront = current.distToFront - remainingDst;
+        entry.distToFront = entry.distToFront - remainingDistance;
+
 
         //If we've moved past the target by any amount, then set that amount to remainingDistance
-        remainingDistance = Math.max(Math.max(current.distToFront - targDist, 0) * -1, 0);
-        current.distToFront += remainingDistance;
+        remainingDst = Math.max((entry.distToFront - targDist) * -1, 0);
+        entry.distToFront = Math.max(entry.distToFront, targDist);
+
+        //Find the distance traveled and increase the current highway's startGap by that much
+        highway.startGap += Math.max(remainingDistance - remainingDst, 0);
+
 
         Highway nextHighway = highway.end.toHighway;
+
+        if(entry.next == entry) Log.info("THERES BEEN AN ISSUE ERE");
         if(remainingDst > 0 && front && nextHighway != null){
+            Log.info("Theres distance left, seize the day!");
             boolean emptyTarget = nextHighway.entries.isEmpty();
 
             //Return if the next highway isn't empty & its backmost state doesn't leave enough room for the current entry
-            if(!emptyTarget && nextHighway.backState().distToBack < (nextHighway.backState().size + entry.size)/2f) return remainingDistance;
+            if(!emptyTarget && nextHighway.startGap < (nextHighway.backState().size + entry.size)/2f) {
+                stuck = true;
+                return remainingDst;
+            }
 
-            highway.entries.remove(entry);
+            highway.entries.remove(0);
+
+            //Set the endpoint of the previous state to null if aplicable (ties it onto the current highway's endpoint)
+            if(!highway.entries.isEmpty()) highway.entries.first().next = null;
+
+            //Set the next entry for the current entry to the target highway's back-most state before adding this
+            //Don't ask how I know not doing it in this order causes things to break
+            if(!emptyTarget) entry.next = nextHighway.backState();
+            entry.distToFront = emptyTarget ? nextHighway.length : nextHighway.startGap;
+
+            //Add this entry to the next highway
             nextHighway.entries.add(entry);
-            entry.distToFront = emptyTarget ? nextHighway.length : nextHighway.backState().distToBack;
-            return moveState(entry, highway.end.toHighway, front, remainingDst);
+            nextHighway.startGap = 0;
+
+            //If the highway is empty, make the start gap the length of the highway
+            if(highway.entries.isEmpty()) highway.startGap = highway.length;
+
+
+            //Let that stupid fuckass neighbour know that we actually transfered their dog over to the vet, ty
+            //This is only front if the highway was empty, otherwise it's literally the back state on the highway
+            return moveState(entry, highway.end.toHighway, emptyTarget, true, remainingDst);
         }
 
-        return remainingDistance;
+        return remainingDst;
     }
 
-    boolean stationary = false;
+    //I CAN HEAR YOU CAROL
+
+    int currentIndex = 0;
+    boolean stuck = false;
     float remainingDst;
-    float totalDisplacement;
     public void update(){
         if(Time.time == updateTimestamp) return;;
         updateTimestamp = Time.time;
@@ -284,61 +315,53 @@ public class ConveyorGraph {
             if(highway.entries.isEmpty()) return;
 
             remainingDst = highway.speed;
+            currentIndex = highway.frontIndex;
+
             while(remainingDst > 0){
-                if(highway.frontIndex >= highway.entries.size) break;
+                if(currentIndex >= highway.entries.size) break;
+
                 //Get the frontmost entry which can still move
-                ConveyorEntry current = highway.entries.get(highway.frontIndex);
+                ConveyorEntry currentEntry = highway.entries.get(currentIndex);
 
-                //Find how far it should be from the front of the chain
-                float targDist = 0;
-
-                //Update how far it should be from the target position
-                if(current.next != null) targDist = (current.size + current.next.size)/2;
-
-                //Move
-                current.distToFront = current.distToFront - remainingDst;
-
-                //If the current distance is greater than the target distance, check for any future highways
-                if(current.distToFront > targDist) {
-
-                    //If theres no additional highways, break
-                    if(highway.end.toHighway == null){
-                        //Set the total displacement to how much the state moved
-                        totalDisplacement = remainingDst;
-                        break;
-                    }
-
-
+                stuck = false;
+                remainingDst = moveState(currentEntry, highway, currentEntry.next == null, currentIndex == highway.entries.size - 1, remainingDst);
+                if(stuck == true) currentIndex++;
+                //If theres no more distance to push items along, break
+                if(remainingDst == 0) {
+                    break;
                 }
 
-                //Find the leftover movement
-                remainingDst = targDist - current.distToFront;
-
-                //Find the displacement that was traveled
-                totalDisplacement += highway.speed - remainingDst;
-
-                //Snap the current entry to its target distance
-                current.distToFront = targDist;
                 //current's distance is now at desired position, increase the frontIndex and start the move again on the next entry
-                highway.frontIndex++;
+                if(highway.end.toHighway == null) {
+                    highway.frontIndex++;
+                }
+
+                //Increment currentIndex reguardless of if stuck or not to avoid getting into crashloops
+                currentIndex++;
+
             }
-            highway.backState().distToBack += totalDisplacement;
 
-
+            curDist = 0;
             highway.entries.each(entry -> {
-                entry.update();
-                Tmp.v1.set(highway.direction).rotate(180).setLength(entry.distToFront).add(entry.next != null ? entry.next : highway.end);
-                entry.x = Tmp.v1.x;
-                entry.y = Tmp.v1.y;
+                curDist += entry.distToFront;
+                Tmp.v1.set(highway.direction).rotate(180).setLength(curDist).add(highway.end);
+                float x = Tmp.v1.x;
+                float y = Tmp.v1.y;
+                entry.x = x;
+                entry.y = y;
+                entry.update(x, y);
             });
         });
     }
 
+    float curDist = 0;
+    Vec2 edgeOffset = new Vec2();
     public void draw() {
         //Don't draw if you've already drawn once this frame
         if (Time.globalTime == drawTimestamp) return;
         drawTimestamp = Time.globalTime;
 
+        /*
         Lines.stroke(3);
         vertices.each(v -> {
             Draw.z(drawLayer - 3);
@@ -353,8 +376,11 @@ public class ConveyorGraph {
             Fill.circle(v.end.x, v.end.y, 2);
         });
 
+
+         */
         Lines.stroke(1);
         highways.each(v -> {
+
             Draw.z(drawLayer);
             Draw.color(Color.green);
             Lines.line(v.start.x, v.start.y, v.end.x, v.end.y);
@@ -366,8 +392,42 @@ public class ConveyorGraph {
             Draw.color(Color.blue);
             Fill.circle(v.end.x, v.end.y, 1);
 
+            curDist = 0;
+            //Direction vector
+            Tmp.v1.set(v.direction).rotate(180);
+
+            Drawf.text(Strings.fixed(v.startGap, 0), v.start.x, v.start.y - 8, Color.black);
             v.entries.each(entry -> {
-                entry.draw();
+
+                Draw.color();
+                //Increment the current drawing dist
+                curDist += entry.distToFront;
+                //Get the offset from the conveyor's front to the current item
+                edgeOffset.set(v.direction).rotate(180).setLength(curDist);
+                float entx = v.end.x + edgeOffset.x, enty = v.end.y + edgeOffset.y;
+
+                Tmp.v2.set(v.end);
+
+
+                Lines.stroke(1);
+                Draw.color(Color.yellow);
+                Lines.line(entx, enty, Tmp.v2.x, Tmp.v2.y);
+                Fill.circle(Tmp.v2.x, Tmp.v2.y, 2);
+
+
+                /*
+                Tmp.v2.set(entry);
+                Tmp.v1.set(v.direction).rotate(180).setLength(entry.distToBack).add(entx, enty);
+                Lines.stroke(2);
+                Draw.color(Color.blue);
+                Lines.line(Tmp.v1.x, Tmp.v1.y, Tmp.v2.x, Tmp.v2.y);
+                Fill.circle(Tmp.v1.x, Tmp.v1.y, 2);
+
+                 */
+
+                Draw.color();
+                Drawf.text(Strings.fixed(entry.distToFront, 0), entx, enty + 8, Color.white);
+                entry.draw(entx, enty);
             });
         });
 
@@ -375,9 +435,8 @@ public class ConveyorGraph {
 
     public static class ConveyorEntry implements Position{
 
-        public ConveyorEntry(Item item, Highway highway){
+        public ConveyorEntry(Item item){
             this.item = item;
-            this.highway = highway;
         }
         public ConveyorEntry(Item item, float size){
             this.item = item;
@@ -386,17 +445,11 @@ public class ConveyorGraph {
 
         public float size = 8;
 
-        public Highway highway;
-
         //Next conveyor entry
         public @Nullable ConveyorEntry next;
 
         //Distance to the endpoint of where the item should travel to.
         public float distToFront;
-
-        //Distance from the back state behind this entry
-        public float distToBack;
-
 
         public Item item = Items.copper;
 
@@ -407,11 +460,11 @@ public class ConveyorGraph {
         public float y = 0;
         public boolean stationary;
 
-        public void update(){
+        public void update(float x, float y){
         }
 
-        public void draw(){
-            Draw.color();
+        public void draw(float x, float y){
+
             Draw.rect(item.uiIcon, x, y);
         }
 
@@ -431,22 +484,32 @@ public class ConveyorGraph {
         return new ConveyorEntry(item, size);
     }
 
+    //Handle a new entry to the graph popped onto the start of a highway
     public boolean handleEntry(Highway highway, ConveyorEntry itemState){
-        itemState.highway = highway;
-
-        if(entries.size == 0){
+        try {
+            //Add the state to the list of current entries
             entries.add(itemState);
-            highway.entries.add(itemState);
-            itemState.distToFront = highway.length;
-        }
-        else{
-            //Attach the entry onto the last possible
-            itemState.next = highway.entries.get(highway.entries.size - 1);
+            highway.startGap = 0;
 
-            entries.add(itemState);
-            highway.entries.add(itemState);
-            itemState.distToFront = Tmp.v1.set(highway.start).dst(itemState.next) - (itemState.next.size + itemState.size)/2f;
+            //If theres no entries on the highway currently, add the state and set the distance to its fromt to the highway's length
+            if(highway.entries.size == 0){
+                highway.entries.add(itemState);
+                itemState.distToFront = highway.length;
+            }
+            //If there *are* entries on the highway currently, then attach this item state onto the next item state
+            else{
+                //Attach the entry onto the last possible
+                itemState.next = highway.entries.peek();
+
+                //Add the entry to the target highway's list
+                highway.entries.add(itemState);
+                itemState.distToFront = Tmp.v1.set(highway.start).dst(itemState.next) - (itemState.next.size + itemState.size)/2f;
+            }
         }
+        catch (Exception exception){
+            Log.err(exception);
+        }
+
         return false;
     }
 
@@ -464,7 +527,8 @@ public class ConveyorGraph {
             this.start = start;
             this.end = end;
 
-            length = Mathf.dst(start.x, start.y, end.x, end.y);
+            //Empty highway, so both length & startGap are the same
+            startGap = length = Mathf.dst(start.x, start.y, end.x, end.y);
 
             Log.info("Highway created from (@, @) to (@, @) of length @",
                     Strings.autoFixed(start.x/Vars.tilesize, 0),
@@ -495,7 +559,7 @@ public class ConveyorGraph {
         //Append the target node onto the start of this vertex.
         public void appendStart(ConveyorNode target){
             if(entries.size > 0){
-                backState().distToBack += start.dst(target);
+                startGap += start.dst(target);
             }
             nodes.add(target);
             nodes.swap(0, nodes.size - 1);
@@ -521,10 +585,10 @@ public class ConveyorGraph {
                     ConveyorEntry thisBackEntry = this.entries.get(this.entries.size - 1);
                     target.entries.get(0).next = thisBackEntry;
 
-                    target.entries.get(0).distToFront += thisBackEntry.distToBack;
+                    //Snap on the target highway's frontmost entry to the startGap of this highway
+                    target.entries.get(0).distToFront += startGap;
 
-                    //Snap on this highway's back entry to the target highway's front entry
-                    thisBackEntry.distToBack = target.entries.get(0).distToFront;
+                    //Use the target highway's start gap
                 }
                 else{
                     targetFrontState.distToFront += length;
@@ -552,6 +616,9 @@ public class ConveyorGraph {
 
         public float length;
 
+        //The gap from the start of the highway to its backmost entry, rehashed every time something moves on it
+        public float startGap;
+
         public Vec2 direction = new Vec2();
 
         public ConveyorNode start;
@@ -568,7 +635,12 @@ public class ConveyorGraph {
         }
 
         public void calculateLength(){
+            float dif = length;
             length = Mathf.dst(start.x, start.y, end.x, end.y);
+
+            //Find how much the length changed from its original, and extend/shrink the starting gap by that much
+            dif = length - dif;
+            startGap += dif;
         }
 
         public void setLength(float newLength){

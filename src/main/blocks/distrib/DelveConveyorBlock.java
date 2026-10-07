@@ -3,10 +3,13 @@ package main.blocks.distrib;
 import arc.util.Log;
 import main.graphs.ConveyorGraph;
 import main.graphs.ItemDistributionGraph;
+import main.items.DelveItem;
+import main.items.ItemEntryIDMap;
 import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.game.Team;
 import mindustry.gen.Building;
+import mindustry.type.Item;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.ConstructBlock;
@@ -57,6 +60,16 @@ public class DelveConveyorBlock extends Block {
             Buildings handle the connections, graph just stores them
             only exception is merging in which graph handles the responsibilities
              */
+        }
+
+        @Override
+        public boolean acceptItem(Building source, Item item) {
+            return (item instanceof DelveItem delvie ? delvie.size : DelveItem.defaultSize) <= node.toHighway.startGap;
+        }
+
+        @Override
+        public void handleItem(Building source, Item item) {
+            graph.handleEntry(node.toHighway, ItemEntryIDMap.getEntry(item));
         }
 
         @Override
