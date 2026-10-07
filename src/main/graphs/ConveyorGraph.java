@@ -12,12 +12,12 @@ import arc.math.geom.Vec2;
 import arc.struct.Seq;
 import arc.util.*;
 import main.blocks.distrib.DelveConveyorBlock;
-import main.blocks.distrib.DelveGraphBlock;
 import mindustry.Vars;
 import mindustry.content.Fx;
+import mindustry.content.Items;
 import mindustry.gen.Building;
 import mindustry.graphics.Layer;
-import mindustry.world.blocks.distribution.Conveyor;
+import mindustry.type.Item;
 
 public class ConveyorGraph {
 
@@ -27,8 +27,9 @@ public class ConveyorGraph {
     static final int halfTilesize = Vars.tilesize/2;
 
     public float drawTimestamp;
+    public float updateTimestamp;
 
-    public Seq<Vertex> highways = new Seq<>();
+    public Seq<Highway> highways = new Seq<>();
     public Seq<Vertex> vertices = new Seq<>();
     public Seq<ConveyorNode> nodes = new Seq<>();
     public Seq<DelveConveyorBlock.DelveConveyorBuild> builds = new Seq<>();
@@ -47,7 +48,7 @@ public class ConveyorGraph {
 
     @Override
     public String toString() {
-        return "Conveyor Graph #:" + id;
+        return Strings.format("Conveyor Graph #@, \nNodes: @\nVertexes: @\nHighways: @", id, nodes, vertices, highways);
     }
 
     /**
@@ -120,7 +121,7 @@ public class ConveyorGraph {
                 Log.info("Case 2: Lonely source, Connected target");
                 //Case 2: Lonely source, connected target.
                 //Extend target highway back to source if inline
-                Vertex sourceInputHighway = target.toHighway;
+                Highway sourceInputHighway = target.toHighway;
                 if (tmpDirection.equals(sourceInputHighway.direction)) {
                     Log.info("inline!");
                     target.toHighway.appendStart(source);
@@ -141,7 +142,7 @@ public class ConveyorGraph {
 
                 //If source only has one input highway && that hihgway is inline with the target, then extend the source highway onto the target
                 if(source.fromHighways.size == 1){
-                    Vertex sourceInputHighway = source.fromHighways.get(0);
+                    Highway sourceInputHighway = source.fromHighways.get(0);
                     if(tmpDirection.equals(sourceInputHighway.direction)){
                         sourceInputHighway.appendEnd(target);
                         target.fromHighways.add(sourceInputHighway);
@@ -161,12 +162,16 @@ public class ConveyorGraph {
                 Merge target output highway to source input highway's end, transfer all data from target highway. Decouple target highway.
                  */
                 if(source.fromHighways.size == 1){
-                    Vertex sourceInputHighway = source.fromHighways.get(0);
+                    Highway sourceInputHighway = source.fromHighways.get(0);
                     //Note: Since we have *both* highways, check if they're both inline instead of infering it from source & target positions
                     if(tmpDirection.equals(sourceInputHighway.direction) && tmpDirection.equals(target.toHighway.direction)){
                         Log.info("Joining two inline highways| Source dir: @, Target dir: @", sourceInputHighway.direction, tmpDirection);
                         highways.remove(target.toHighway);
                         target.toHighway.mergeOnto(sourceInputHighway);
+
+                        Fx.explosion.at(target.toHighway.start);
+                        Fx.fire.at(target.toHighway.end);
+
                         return returnVertex;
                     }
 
@@ -219,8 +224,8 @@ public class ConveyorGraph {
     }
 
     //Returns the highway made
-    public Vertex addHighway(ConveyorNode start, ConveyorNode end){
-        Vertex highway = new Vertex(start, end);
+    public Highway addHighway(ConveyorNode start, ConveyorNode end){
+        Highway highway = new Highway(start, end);
         end.fromHighways.add(highway);
         start.toHighway = highway;
 
@@ -229,6 +234,106 @@ public class ConveyorGraph {
     }
 
 
+    public static float drawLayer = Layer.endPixeled;
+    ConveyorEntry current;
+
+    //Move an entry along a highway, returning any remaining distance
+    //Will move entries into and past intersections
+    public float moveState(ConveyorEntry entry, Highway highway, boolean front, float remainingDistance){
+        //Find how far it should be from the front of the chain
+        float targDist = 0;
+
+        //If this isn't the front most entry, then offset the target distance by the front state's size + this state's size / 2
+        if(!front) {
+            current = entry.next;
+            targDist = (current.size + current.next.size) / 2;
+        }
+
+        //Move
+        current.distToFront = current.distToFront - remainingDst;
+
+        //If we've moved past the target by any amount, then set that amount to remainingDistance
+        remainingDistance = Math.max(Math.max(current.distToFront - targDist, 0) * -1, 0);
+        current.distToFront += remainingDistance;
+
+        Highway nextHighway = highway.end.toHighway;
+        if(remainingDst > 0 && front && nextHighway != null){
+            boolean emptyTarget = nextHighway.entries.isEmpty();
+
+            //Return if the next highway isn't empty & its backmost state doesn't leave enough room for the current entry
+            if(!emptyTarget && nextHighway.backState().distToBack < (nextHighway.backState().size + entry.size)/2f) return remainingDistance;
+
+            highway.entries.remove(entry);
+            nextHighway.entries.add(entry);
+            entry.distToFront = emptyTarget ? nextHighway.length : nextHighway.backState().distToBack;
+            return moveState(entry, highway.end.toHighway, front, remainingDst);
+        }
+
+        return remainingDistance;
+    }
+
+    boolean stationary = false;
+    float remainingDst;
+    float totalDisplacement;
+    public void update(){
+        if(Time.time == updateTimestamp) return;;
+        updateTimestamp = Time.time;
+
+        highways.each(highway -> {
+            //No entries to update, return!
+            if(highway.entries.isEmpty()) return;
+
+            remainingDst = highway.speed;
+            while(remainingDst > 0){
+                if(highway.frontIndex >= highway.entries.size) break;
+                //Get the frontmost entry which can still move
+                ConveyorEntry current = highway.entries.get(highway.frontIndex);
+
+                //Find how far it should be from the front of the chain
+                float targDist = 0;
+
+                //Update how far it should be from the target position
+                if(current.next != null) targDist = (current.size + current.next.size)/2;
+
+                //Move
+                current.distToFront = current.distToFront - remainingDst;
+
+                //If the current distance is greater than the target distance, check for any future highways
+                if(current.distToFront > targDist) {
+
+                    //If theres no additional highways, break
+                    if(highway.end.toHighway == null){
+                        //Set the total displacement to how much the state moved
+                        totalDisplacement = remainingDst;
+                        break;
+                    }
+
+
+                }
+
+                //Find the leftover movement
+                remainingDst = targDist - current.distToFront;
+
+                //Find the displacement that was traveled
+                totalDisplacement += highway.speed - remainingDst;
+
+                //Snap the current entry to its target distance
+                current.distToFront = targDist;
+                //current's distance is now at desired position, increase the frontIndex and start the move again on the next entry
+                highway.frontIndex++;
+            }
+            highway.backState().distToBack += totalDisplacement;
+
+
+            highway.entries.each(entry -> {
+                entry.update();
+                Tmp.v1.set(highway.direction).rotate(180).setLength(entry.distToFront).add(entry.next != null ? entry.next : highway.end);
+                entry.x = Tmp.v1.x;
+                entry.y = Tmp.v1.y;
+            });
+        });
+    }
+
     public void draw() {
         //Don't draw if you've already drawn once this frame
         if (Time.globalTime == drawTimestamp) return;
@@ -236,48 +341,251 @@ public class ConveyorGraph {
 
         Lines.stroke(3);
         vertices.each(v -> {
-            Draw.z(Layer.space - 3);
+            Draw.z(drawLayer - 3);
             Draw.color(Color.brown);
             Lines.line(v.start.x, v.start.y, v.end.x, v.end.y);
 
-            Draw.z(Layer.space - 2);
+            Draw.z(drawLayer - 2);
             Draw.color(Color.orange);
             Fill.square(v.start.x, v.start.y, 3);
-            Draw.z(Layer.space - 1);
+            Draw.z(drawLayer - 1);
             Draw.color(Color.purple);
             Fill.circle(v.end.x, v.end.y, 2);
         });
 
         Lines.stroke(1);
         highways.each(v -> {
-            Draw.z(Layer.space);
+            Draw.z(drawLayer);
             Draw.color(Color.green);
             Lines.line(v.start.x, v.start.y, v.end.x, v.end.y);
 
-            Draw.z(Layer.space + 1);
+            Draw.z(drawLayer + 1);
             Draw.color(Color.red);
             Fill.square(v.start.x, v.start.y, 2);
-            Draw.z(Layer.space + 2);
+            Draw.z(drawLayer + 2);
             Draw.color(Color.blue);
             Fill.circle(v.end.x, v.end.y, 1);
+
+            v.entries.each(entry -> {
+                entry.draw();
+            });
         });
 
     }
 
-    public static class ConveyorEntry{
-        public float size;
+    public static class ConveyorEntry implements Position{
 
-        public Vertex vertex;
-        public @Nullable ConveyorEntry entry;
-        public float distToEnd;
+        public ConveyorEntry(Item item, Highway highway){
+            this.item = item;
+            this.highway = highway;
+        }
+        public ConveyorEntry(Item item, float size){
+            this.item = item;
+            this.size = size;
+        }
+
+        public float size = 8;
+
+        public Highway highway;
+
+        //Next conveyor entry
+        public @Nullable ConveyorEntry next;
+
+        //Distance to the endpoint of where the item should travel to.
+        public float distToFront;
+
+        //Distance from the back state behind this entry
+        public float distToBack;
+
+
+        public Item item = Items.copper;
+
+        //The conveyor nodes this entry is currently on.
+        public Seq<ConveyorNode> nodes;
+
+        public float x = 0;
+        public float y = 0;
+        public boolean stationary;
+
+        public void update(){
+        }
 
         public void draw(){
+            Draw.color();
+            Draw.rect(item.uiIcon, x, y);
+        }
 
+        @Override
+        public float getX() {
+            return x;
+        }
+
+        @Override
+        public float getY() {
+            return y;
         }
     }
 
-    //Stores information about the item states
+    //build.graph.handleEntry(build.node.toHighway, DelveItems.shadesteel.itemState.get())
+    public ConveyorEntry entry(Item item, float size){
+        return new ConveyorEntry(item, size);
+    }
+
+    public boolean handleEntry(Highway highway, ConveyorEntry itemState){
+        itemState.highway = highway;
+
+        if(entries.size == 0){
+            entries.add(itemState);
+            highway.entries.add(itemState);
+            itemState.distToFront = highway.length;
+        }
+        else{
+            //Attach the entry onto the last possible
+            itemState.next = highway.entries.get(highway.entries.size - 1);
+
+            entries.add(itemState);
+            highway.entries.add(itemState);
+            itemState.distToFront = Tmp.v1.set(highway.start).dst(itemState.next) - (itemState.next.size + itemState.size)/2f;
+        }
+        return false;
+    }
+
+    //Stores information about the connections between intersections & corners, as well as item states
+    public static class Highway{
+
+        @Override
+        public String toString() {
+            return Strings.format("Highway| From: @, To: @", start, end);
+        }
+
+        public float speed = Vars.tilesize/60f * 2;
+
+        public Highway(ConveyorNode start, ConveyorNode end){
+            this.start = start;
+            this.end = end;
+
+            length = Mathf.dst(start.x, start.y, end.x, end.y);
+
+            Log.info("Highway created from (@, @) to (@, @) of length @",
+                    Strings.autoFixed(start.x/Vars.tilesize, 0),
+                    Strings.autoFixed(start.y/Vars.tilesize, 0),
+                    Strings.autoFixed(end.x/Vars.tilesize, 0),
+                    Strings.autoFixed(end.y/Vars.tilesize, 0),
+                    length
+            );
+            if(length == 0){
+                int p = 0;
+                p = 1/p;
+            }
+
+            direction.set(end).sub(start).setLength(1);
+            nodes.addAll(start);
+        }
+
+        //Append the target node onto the end of this vertex.
+        public void appendEnd(ConveyorNode target){
+            if(entries.size > 0){
+                frontIndex = 0;
+                entries.get(0).distToFront += end.dst(target);
+            }
+            nodes.add(end);
+            end = target;
+            calculateLength();
+        }
+        //Append the target node onto the start of this vertex.
+        public void appendStart(ConveyorNode target){
+            if(entries.size > 0){
+                backState().distToBack += start.dst(target);
+            }
+            nodes.add(target);
+            nodes.swap(0, nodes.size - 1);
+            start = target;
+            calculateLength();
+        }
+        //Merge this vertex onto the front of another vertex
+        public void mergeOnto(Highway target){
+            nodes.each(n -> {
+                n.toHighway = target;
+            });
+
+            if(target.entries.size > 0){
+                ConveyorEntry targetFrontState = target.entries.get(0);
+
+                //Jump the merge target's entries back by the gap between the two highway's endpoints
+                targetFrontState.distToFront += target.end.dst(start);
+
+                target.frontIndex = 0;
+
+                //If this highway has any items, jump the ending item of the merge target back by the back spacing of the backmost state of this highway
+                if(entries.size > 0){
+                    ConveyorEntry thisBackEntry = this.entries.get(this.entries.size - 1);
+                    target.entries.get(0).next = thisBackEntry;
+
+                    target.entries.get(0).distToFront += thisBackEntry.distToBack;
+
+                    //Snap on this highway's back entry to the target highway's front entry
+                    thisBackEntry.distToBack = target.entries.get(0).distToFront;
+                }
+                else{
+                    targetFrontState.distToFront += length;
+                }
+            }
+            entries.add(target.entries);
+            target.entries = entries;
+            target.nodes.add(nodes);
+
+            target.end = this.end;
+
+            //Remap the current end node of this highway into the target's end node
+            this.end.fromHighways.clear();
+            this.end.fromHighways.add(target);
+
+            target.length += this.length;
+            target.calculateLength();
+        }
+
+        //Flag for if this highway is straight and extendable
+        public boolean straight = true;
+
+        //All nodes ordered from start up to before end
+        public Seq<ConveyorNode> nodes = new Seq<>();
+
+        public float length;
+
+        public Vec2 direction = new Vec2();
+
+        public ConveyorNode start;
+        public ConveyorNode end;
+
+        //Entries on the highway
+        public Seq<ConveyorEntry> entries = new Seq<>();
+
+        //Entry at the front of the stack that's still moving
+        public int frontIndex = 0;
+
+        public ConveyorEntry backState(){
+            return entries.get(entries.size - 1);
+        }
+
+        public void calculateLength(){
+            length = Mathf.dst(start.x, start.y, end.x, end.y);
+        }
+
+        public void setLength(float newLength){
+            Tmp.v1.set(end).sub(start).setLength(newLength).add(start);
+            end.setPos(Tmp.v1);
+        }
+    }
+
+
+    //Stores information about the individual connections between blocks
     public static class Vertex{
+
+        @Override
+        public String toString() {
+            return Strings.format("Vertex| From: @, To: @", start, end);
+        }
+
         public Vertex(ConveyorNode start, ConveyorNode end){
             this.start = start;
             this.end = end;
@@ -297,34 +605,9 @@ public class ConveyorGraph {
             }
 
             direction.set(end).sub(start).setLength(1);
-            nodes.addAll(start);
         }
-
-        //Append the target node onto the end of this vertex.
-        public void appendEnd(ConveyorNode target){
-            nodes.add(end);
-            end = target;
-        }
-        //Append the target node onto the start of this vertex.
-        public void appendStart(ConveyorNode target){
-            nodes.add(target);
-            nodes.swap(0, nodes.size - 1);
-            start = target;
-        }
-        //Merge this vertex onto another vertex
-        public void mergeOnto(Vertex target){
-            if(highway) nodes.each(n -> {
-                n.toHighway = target;
-            });
-            target.nodes.add(nodes);
-            target.end = this.end;
-            target.length += this.length;
-        }
-
-        //Flag for if this vertex is a highway or not.
-        public boolean highway = false;
-        //All nodes ordered from start up to before end
-        public Seq<ConveyorNode> nodes = new Seq<>();
+        //Flag for if this vertex is straight
+        public boolean straight = true;
 
         public float length;
 
@@ -340,6 +623,12 @@ public class ConveyorGraph {
     }
 
     public static class ConveyorNode implements Position {
+
+        @Override
+        public String toString() {
+            return Strings.format("(@, @)",x/Vars.tilesize, y/Vars.tilesize);
+        }
+
         public ConveyorNode(float x, float y){
             this.x = x;
             this.y = y;
@@ -367,10 +656,10 @@ public class ConveyorGraph {
         public Vertex toVertex;
 
         //Highway vertex that this is a part of.
-        public Vertex toHighway;
+        public Highway toHighway;
 
         //Highways leading into this node
-        public Seq<Vertex> fromHighways = new Seq<>();
+        public Seq<Highway> fromHighways = new Seq<>();
 
         public void setPos(Position pos){
             this.x = pos.getX();

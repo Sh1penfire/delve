@@ -3,6 +3,7 @@ package main.blocks.distrib;
 import arc.util.Log;
 import main.graphs.ConveyorGraph;
 import main.graphs.ItemDistributionGraph;
+import mindustry.Vars;
 import mindustry.game.EventType;
 import mindustry.game.Team;
 import mindustry.gen.Building;
@@ -17,6 +18,8 @@ public class DelveConveyorBlock extends Block {
         rotate = quickRotate = drawArrow = true;
     }
 
+    public float speed = Vars.tilesize/60f;
+
     public class DelveConveyorBuild extends Building {
         public ConveyorGraph graph;
         //The vetex that outputs from this building
@@ -28,6 +31,16 @@ public class DelveConveyorBlock extends Block {
         public ConveyorGraph.ConveyorNode node;
 
         public DelveConveyorBuild frontConv;
+
+        public void updateState(ConveyorGraph.ConveyorEntry entry){
+
+        }
+
+        @Override
+        public void update() {
+            super.update();
+            graph.update();
+        }
 
         public void updateGraph(){
             Log.info("Updating proximity on: @", tile);

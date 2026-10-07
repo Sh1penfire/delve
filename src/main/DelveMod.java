@@ -1,5 +1,6 @@
 package main;
 
+import arc.struct.Seq;
 import arc.util.*;
 import main.blocks.WallBlaster;
 import main.content.DelveAspects;
@@ -8,12 +9,16 @@ import main.content.blocks.DelveEnvBlocks;
 import main.content.blocks.DelveProdBlocks;
 import main.content.DelveUnits;
 import main.content.modifiers.VanillaCostModifier;
+import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.mod.*;
 import mindustry.world.blocks.environment.StaticTree;
 import mindustry.world.blocks.environment.StaticWall;
+import rhino.ImporterTopLevel;
+import rhino.NativeJavaPackage;
 
 public class DelveMod extends Mod{
+    public static NativeJavaPackage p = null;
 
     public DelveMod(){
 
@@ -21,20 +26,6 @@ public class DelveMod extends Mod{
 
     @Override
     public void loadContent(){
-
-        WallBlaster.map.putAll(Blocks.duneWall, Blocks.stoneWall,
-                Blocks.stoneWall, Blocks.sandWall,
-                Blocks.sandWall, Blocks.air);
-
-        WallBlaster.map.putAll(Blocks.iceWall, Blocks.snowWall,
-                Blocks.snowWall, Blocks.air);
-
-        new StaticWall("glacier-cube"){{
-            variants = 2;
-        }};
-        new StaticTree("glacier-slab"){{
-            variants = 0;
-        }};
 
         DelveUnits.load();
         DelveAspects.load();
@@ -46,6 +37,33 @@ public class DelveMod extends Mod{
 
         Log.info("FUCK YOU EGGMAN IM GOING TO COUNTER-PISS ON THE MOOOOOOOOOOON");
         //I touched intelij today :D
+    }
+
+    @Override
+    public void init() {
+        super.init();
+
+        Vars.mods.getScripts().runConsole(
+                "function buildWorldP(){return Vars.world.buildWorld(Vars.player.x, Vars.player.y)}");
+        ImporterTopLevel scope = (ImporterTopLevel) Vars.mods.getScripts().scope;
+
+        Seq<String> packages = Seq.with(
+                "main",
+                "main.content",
+                "main.content.blocks",
+                "main.world",
+                "main.fluid",
+                "main.graphics"
+        );
+
+        packages.each(name -> {
+
+            p = new NativeJavaPackage(name, Vars.mods.mainLoader());
+
+            p.setParentScope(scope);
+
+            scope.importPackage(p);
+        });
     }
 
 }
