@@ -2,17 +2,14 @@ package main.blocks.distrib;
 
 import arc.util.Log;
 import main.graphs.ConveyorGraph;
-import main.graphs.ItemDistributionGraph;
 import main.items.DelveItem;
 import main.items.ItemEntryIDMap;
 import mindustry.Vars;
-import mindustry.game.EventType;
 import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.type.Item;
 import mindustry.world.Block;
 import mindustry.world.Tile;
-import mindustry.world.blocks.ConstructBlock;
 
 public class DelveConveyorBlock extends Block {
     public DelveConveyorBlock(String name) {
@@ -45,9 +42,30 @@ public class DelveConveyorBlock extends Block {
             graph.update();
         }
 
+        @Override
+        public void onRemoved() {
+            //Disconnect this node and its target node
+            if(node.toVertex != null){
+                Log.info("Node & Node to vertex: @ & @", node, node.toVertex);
+                graph.disconnect(node, node.toVertex.end);
+            }
+            //Disconnect all the nodes connected to this
+            if(node.fromVertexes != null){
+                Log.info(node.fromVertexes);
+                ConveyorGraph.Vertex[] vOk = node.fromVertexes.toArray(ConveyorGraph.Vertex.class);
+
+                for(ConveyorGraph.Vertex v: vOk){
+                    graph.disconnect(v.start, v.end);
+                }
+            }
+            graph.nodes.remove(node);
+
+            super.onRemoved();
+        }
+
         public void updateGraph(){
-            Log.info("Updating proximity on: @", tile);
-            DelveConveyorBuild front = null, back = null;
+            Log.info("Updating graph on: @", tile);
+            DelveConveyorBuild front = null;
             if(front() instanceof DelveConveyorBuild graphed){
                 front = graphed;
             }
@@ -62,9 +80,15 @@ public class DelveConveyorBlock extends Block {
              */
         }
 
+        public ConveyorGraph createGraph(ConveyorGraph.ConveyorNode node){
+            graph = new ConveyorGraph(node);
+            graph.builds.add(this);
+            return graph;
+        }
+
         @Override
         public boolean acceptItem(Building source, Item item) {
-            return (item instanceof DelveItem delvie ? delvie.size : DelveItem.defaultSize) <= node.toHighway.startGap;
+            return node.toHighway != null && (item instanceof DelveItem delvie ? delvie.size : DelveItem.defaultSize) <= node.toHighway.startGap;
         }
 
         @Override
@@ -76,9 +100,7 @@ public class DelveConveyorBlock extends Block {
         public Building init(Tile tile, Team team, boolean shouldAdd, int rotation) {
             super.init(tile, team, shouldAdd, rotation);
             node = new ConveyorGraph.ConveyorNode(this.x, this.y, this);
-            graph = new ConveyorGraph(node);
-            graph.builds.add(this);
-
+            createGraph(node);
             return this;
         }
 
