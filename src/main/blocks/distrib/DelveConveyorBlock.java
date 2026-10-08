@@ -32,6 +32,8 @@ public class DelveConveyorBlock extends Block {
 
         public DelveConveyorBuild frontConv;
 
+        public int lastRot = 0;
+
         public void updateState(ConveyorGraph.ConveyorEntry entry){
 
         }
@@ -104,10 +106,15 @@ public class DelveConveyorBlock extends Block {
             return this;
         }
 
+
+
         @Override
         public void onProximityUpdate() {
+            if(lastRot != rotation){
+                lastRot = rotation;
+            }
             super.onProximityUpdate();
-            updateGraph();
+            //updateGraph();
         }
 
         @Override

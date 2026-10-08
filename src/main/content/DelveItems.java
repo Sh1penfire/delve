@@ -17,7 +17,7 @@ public class DelveItems {
         stone = new DelveItem("rubble", Color.gray){{
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 1);
-            size = 8;
+            size = 16;
         }};
 
         rust = new DelveItem("rust", Color.valueOf("9d755d")){{
