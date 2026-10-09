@@ -42,6 +42,18 @@ public class DelveConveyorBlock extends Block {
         public void update() {
             super.update();
             graph.update();
+            if(node.toHighway == null) node.fromHighways.each(highway -> {
+                ConveyorGraph.ConveyorEntry entry = highway.entries.firstOpt();
+                if(entry == null || entry.distToFront > 0) return;
+                Building target = front();
+                if(target == null || !target.acceptItem(this, entry.itemState.type)) return;
+
+                highway.entries.remove(0);
+                highway.frontIndex = 0;
+                target.handleItem(this, entry.itemState.type);
+                if(highway.entries.isEmpty()) highway.startGap = highway.length;
+                else highway.entries.first().next = null;
+            });
         }
 
         @Override
