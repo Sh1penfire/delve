@@ -7,6 +7,7 @@ import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.util.Nullable;
 import main.graphs.ConveyorGraph;
+import main.type.ItemState;
 import mindustry.game.EventType;
 import mindustry.type.Item;
 
@@ -21,7 +22,7 @@ public class DelveItem extends Item {
 
     public int size = 4;
 
-    public Prov<ConveyorGraph.ConveyorEntry> constructor = () -> new CustomConveyorEntry(this, size);
+    public Prov<ItemState> constructor = () -> new UpdateItemState(this, size);
 
     public void update(float x, float y){
 
@@ -30,18 +31,17 @@ public class DelveItem extends Item {
 
     };
 
-    public class CustomConveyorEntry extends ConveyorGraph.ConveyorEntry {
+    public class UpdateItemState extends ItemState {
 
         public DelveItem item;
 
-        public CustomConveyorEntry(DelveItem item, float size) {
+        public UpdateItemState(DelveItem item, float size) {
             super(item, size);
             this.item = item;
         }
 
         @Override
-        public void update(float x, float y) {
-            super.update(x, y);
+        public void update() {
             item.update(x, y);
         }
     }

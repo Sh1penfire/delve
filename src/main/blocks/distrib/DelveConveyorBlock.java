@@ -95,7 +95,7 @@ public class DelveConveyorBlock extends Block {
 
         @Override
         public void handleItem(Building source, Item item) {
-            graph.handleEntry(node.toHighway, ItemEntryIDMap.getEntry(item));
+            graph.handleEntry(node.toHighway, new ConveyorGraph.ConveyorEntry(ItemEntryIDMap.getState(item)));
         }
 
         @Override
@@ -114,7 +114,7 @@ public class DelveConveyorBlock extends Block {
                 lastRot = rotation;
             }
             super.onProximityUpdate();
-            //updateGraph();
+            updateGraph();
         }
 
         @Override

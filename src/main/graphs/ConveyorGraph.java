@@ -10,6 +10,7 @@ import arc.math.geom.Vec2;
 import arc.struct.Seq;
 import arc.util.*;
 import main.blocks.distrib.DelveConveyorBlock;
+import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.content.Items;
@@ -255,10 +256,9 @@ public class ConveyorGraph {
             if(targetLonely){
                 //Case 1: We actually aren't connected to anything else, and it's just the two nodes
                 Log.info("Case 1: Lonely source, Lonely target");
-                if (splitTarget != null) highways.remove(splitTarget);
 
                 removeVertex(vertexTarget);
-                removeHighway(splitTarget);
+                if (splitTarget != null) highways.remove(splitTarget);
 
                 DelveConveyorBlock.DelveConveyorBuild targetBuild = target.building;
 
@@ -500,29 +500,20 @@ public class ConveyorGraph {
                     if(tmpDirection.equals(sourceInputHighway.direction) && tmpDirection.equals(target.toHighway.direction)){
                         Log.info("Joining two inline highways| Source dir: @, Target dir: @", sourceInputHighway.direction, tmpDirection);
 
-                        highways.remove(targetHighway);
-                        Seq<ConveyorNode> targetNodes = new Seq<>();
-
-                        targetNodes.set(targetHighway.nodes);
-                        targetNodes.each(n -> {
-                            n.fromHighways.remove(targetHighway);
-                            n.fromHighways.add(sourceInputHighway);
-                            if(n != target) n.toHighway = sourceInputHighway;
-                        });
+                        //Add the nodes from the target highway & add the source
+                        sourceInputHighway.nodes.add(targetHighway.nodes);
+                        sourceInputHighway.nodes.add(source);
 
                         targetHighway.mergeOnto(sourceInputHighway);
 
                         //Add the gap between the source/target to the length
                         sourceInputHighway.length += source.dst(target);
 
-                        //Join the source/target themselves to the highway
-                        source.toHighway = sourceInputHighway;
-                        target.fromHighways.remove(targetHighway);
-                        target.fromHighways.add(sourceInputHighway);
-                        Log.info("Source: @, Target: @", source, target);
-
                         Fx.explosion.at(targetHighway.start);
                         Fx.fire.at(targetHighway.end);
+
+                        //Remove the old highway
+                        highways.remove(targetHighway);
 
                         return returnVertex;
                     }
@@ -537,6 +528,18 @@ public class ConveyorGraph {
 
                         source.toHighway.appendEnd(target);
                         target.fromHighways.add(source.toHighway);
+                        return returnVertex;
+                    }
+                    //If the direction of the target's output highway is inline with the direction from source to target, then extend the target's input
+                    if(tmpDirection.equals(targetHighway.direction)) {
+                        Log.info("Connecting source's output highway onto new highway's start");
+                        //Otherwise, merge existing highway onto target's output highway's start
+
+                        //Set the source's output highway to its current input highway
+                        source.toHighway = targetHighway;
+                        targetHighway.nodes.add(source);
+
+                        target.toHighway.appendStart(source);
                         return returnVertex;
                     }
                 }
@@ -782,11 +785,12 @@ public class ConveyorGraph {
 
     public static class ConveyorEntry implements Position{
 
-        public ConveyorEntry(Item item){
-            this.item = item;
+        public ConveyorEntry(ItemState itemState){
+            this.itemState = itemState;
+            this.size = itemState.size;
         }
-        public ConveyorEntry(Item item, float size){
-            this.item = item;
+        public ConveyorEntry(ItemState itemState, float size){
+            this.itemState = itemState;
             this.size = size;
         }
 
@@ -802,20 +806,22 @@ public class ConveyorGraph {
         //Distance to the endpoint of where the item should travel to.
         public float distToFront;
 
-        public Item item = Items.copper;
+        public ItemState itemState;
 
         //The conveyor nodes this entry is currently on.
         public Seq<ConveyorNode> nodes;
 
         public float x = 0;
         public float y = 0;
-        public boolean stationary;
 
         public void update(float x, float y){
+            itemState.x = x;
+            itemState.y = y;
+            itemState.update();
         }
 
         public void draw(float x, float y){
-            Draw.rect(item.uiIcon, x, y);
+            itemState.draw();
             Drawf.text(stateString, x, y, Color.red);
             Drawf.text(belowString, x, y - 8, Color.yellow);
         }
@@ -829,11 +835,6 @@ public class ConveyorGraph {
         public float getY() {
             return y;
         }
-    }
-
-    //build.graph.handleEntry(build.node.toHighway, DelveItems.shadesteel.itemState.get())
-    public ConveyorEntry entry(Item item, float size){
-        return new ConveyorEntry(item, size);
     }
 
     //Handle a new entry to the graph popped onto the start of a highway
@@ -922,6 +923,8 @@ public class ConveyorGraph {
             nodes.each(n -> {
                 n.toHighway = target;
             });
+            target.end.toHighway = target;
+            start.fromHighways.add(target);
 
             if(target.entries.size > 0){
                 ConveyorEntry targetFrontState = target.entries.get(0);
@@ -1036,8 +1039,6 @@ public class ConveyorGraph {
 
             direction.set(end).sub(start).setLength(1);
         }
-        //Flag for if this vertex is straight
-        public boolean straight = true;
 
         public float length;
 
@@ -1045,11 +1046,6 @@ public class ConveyorGraph {
 
         public ConveyorNode start;
         public ConveyorNode end;
-
-        public void setLength(float newLength){
-            Tmp.v1.set(end).sub(start).setLength(newLength).add(start);
-            end.setPos(Tmp.v1);
-        }
     }
 
     public static class ConveyorNode implements Position {
