@@ -3,6 +3,7 @@ package main.blocks;
 import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import main.DelveGeometry;
+import main.blocks.environment.ItemPile;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.gen.Building;

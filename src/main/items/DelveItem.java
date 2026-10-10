@@ -4,11 +4,14 @@ import arc.Core;
 import arc.Events;
 import arc.func.Prov;
 import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
 import arc.math.Mathf;
+import arc.struct.ObjectFloatMap;
 import arc.util.Nullable;
 import main.graphs.ConveyorGraph;
 import main.type.ItemState;
 import mindustry.game.EventType;
+import mindustry.graphics.Layer;
 import mindustry.type.Item;
 
 public class DelveItem extends Item {
@@ -24,11 +27,12 @@ public class DelveItem extends Item {
 
     public Prov<ItemState> constructor = () -> new UpdateItemState(this, size);
 
-    public void update(float x, float y){
+    public void update(ItemState state, float x, float y){
 
     }
-    public void draw(float x, float y){
 
+    public void draw(ItemState state, float x, float y){
+        Draw.rect(state.type.fullIcon, x, y);
     };
 
     public class UpdateItemState extends ItemState {
@@ -38,11 +42,19 @@ public class DelveItem extends Item {
         public UpdateItemState(DelveItem item, float size) {
             super(item, size);
             this.item = item;
+            data = new ObjectFloatMap<>();
         }
 
         @Override
         public void update() {
-            item.update(x, y);
+            item.update(this, x, y);
+        }
+
+        @Override
+        public void draw() {
+            Draw.z(Layer.blockOver);
+            item.draw(this, x, y);
+            Draw.reset();
         }
     }
 

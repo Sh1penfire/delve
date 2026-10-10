@@ -1,22 +1,17 @@
 package main.content.blocks;
 
-import main.blocks.ItemPile;
-import main.blocks.OreBlock;
-import main.blocks.ThingBlock;
-import mindustry.type.Category;
-import mindustry.type.ItemStack;
-import mindustry.world.Block;
+import main.blocks.environment.ItemPile;
+import main.blocks.environment.ItemStatePile;
+import main.blocks.environment.OreBlock;
 
 public class DelveEnvBlocks {
     public static OreBlock oreBlock;
     public static ItemPile itemPile;
+    public static ItemStatePile statePile;
 
     public static void load(){
         oreBlock = new OreBlock("ore-block");
         itemPile = new ItemPile("item-pile");
-
-        new ThingBlock("thingblock"){{
-            requirements(Category.distribution, ItemStack.with());
-        }};
+        statePile = new ItemStatePile("item-state-pile");
     }
 }

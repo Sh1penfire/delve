@@ -1,6 +1,7 @@
 package main.type;
 
 import arc.graphics.g2d.Draw;
+import arc.struct.ObjectFloatMap;
 import mindustry.type.Item;
 
 public class ItemState {
@@ -13,6 +14,8 @@ public class ItemState {
 
     //Position in the world
     public float x, y;
+
+    public ObjectFloatMap<String> data;
 
     public ItemState(Item item, float defaultSize) {
         type = item;

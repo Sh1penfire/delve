@@ -710,42 +710,46 @@ public class ConveyorGraph {
 
     float curDist = 0;
     Vec2 edgeOffset = new Vec2();
+
+    static boolean debug = false;
     public void draw() {
         //Don't draw if you've already drawn once this frame
         if (Time.globalTime == drawTimestamp) return;
         drawTimestamp = Time.globalTime;
 
-        Lines.stroke(3);
-        vertices.each(v -> {
-            Draw.z(drawLayer - 3);
-            Draw.color(Color.brown);
-            Lines.line(v.start.x, v.start.y, v.end.x, v.end.y);
+        if(debug){
+            Lines.stroke(3);
+            vertices.each(v -> {
+                Draw.z(drawLayer - 3);
+                Draw.color(Color.brown);
+                Lines.line(v.start.x, v.start.y, v.end.x, v.end.y);
 
-            Draw.z(drawLayer - 2);
-            Draw.color(v.start.mark ? Color.yellow : Color.orange);
-            Fill.square(v.start.x, v.start.y, 3);
-            Draw.z(drawLayer - 1);
-            Draw.color(v.start.mark ? Color.magenta : Color.purple);
-            Fill.circle(v.end.x, v.end.y, 2);
-        });
+                Draw.z(drawLayer - 2);
+                Draw.color(v.start.mark ? Color.yellow : Color.orange);
+                Fill.square(v.start.x, v.start.y, 3);
+                Draw.z(drawLayer - 1);
+                Draw.color(v.start.mark ? Color.magenta : Color.purple);
+                Fill.circle(v.end.x, v.end.y, 2);
+            });
+        }
 
         Lines.stroke(1);
         highways.each(v -> {
 
-            Draw.z(drawLayer);
-            Draw.color(v.start.mark ? Color.lime : Color.olive);
-            Lines.line(v.start.x, v.start.y, v.end.x, v.end.y);
+            if(debug){
+                Draw.z(drawLayer);
+                Draw.color(v.start.mark ? Color.lime : Color.olive);
+                Lines.line(v.start.x, v.start.y, v.end.x, v.end.y);
 
-            Draw.z(drawLayer + 1);
-            Draw.color(v.start.mark ? Color.pink : Color.red);
-            Fill.square(v.start.x, v.start.y, 2);
-            Draw.z(drawLayer + 2);
-            Draw.color(v.start.mark ? Color.sky : Color.blue);
-            Fill.circle(v.end.x, v.end.y, 1);
+                Draw.z(drawLayer + 1);
+                Draw.color(v.start.mark ? Color.pink : Color.red);
+                Fill.square(v.start.x, v.start.y, 2);
+                Draw.z(drawLayer + 2);
+                Draw.color(v.start.mark ? Color.sky : Color.blue);
+                Fill.circle(v.end.x, v.end.y, 1);
+            }
 
             curDist = 0;
-            //Direction vector
-            Tmp.v1.set(v.direction).rotate(180);
 
             Drawf.text(Strings.fixed(v.startGap, 0), v.start.x, v.start.y - 8, Color.green);
             v.entries.each(entry -> {
@@ -757,24 +761,23 @@ public class ConveyorGraph {
                 edgeOffset.set(v.direction).rotate(180).setLength(curDist);
                 float entx = v.end.x + edgeOffset.x, enty = v.end.y + edgeOffset.y;
 
-                Tmp.v2.set(v.end);
+                if(debug) {
+                    Tmp.v2.set(v.end);
 
 
-                Lines.stroke(1);
-                Draw.color(Color.yellow);
-                Lines.line(entx, enty, Tmp.v2.x, Tmp.v2.y);
-                Fill.circle(Tmp.v2.x, Tmp.v2.y, 2);
+                    Lines.stroke(1);
+                    Draw.color(Color.yellow);
+                    Lines.line(entx, enty, Tmp.v2.x, Tmp.v2.y);
+                    Fill.circle(Tmp.v2.x, Tmp.v2.y, 2);
 
 
-                /*
-                Tmp.v2.set(entry);
-                Tmp.v1.set(v.direction).rotate(180).setLength(entry.distToBack).add(entx, enty);
-                Lines.stroke(2);
-                Draw.color(Color.blue);
-                Lines.line(Tmp.v1.x, Tmp.v1.y, Tmp.v2.x, Tmp.v2.y);
-                Fill.circle(Tmp.v1.x, Tmp.v1.y, 2);
-
-                 */
+                    Tmp.v2.set(entry);
+                    //Tmp.v1.set(v.direction).rotate(180).setLength(entry.).add(entx, enty);
+                    Lines.stroke(2);
+                    Draw.color(Color.blue);
+                    Lines.line(Tmp.v1.x, Tmp.v1.y, Tmp.v2.x, Tmp.v2.y);
+                    Fill.circle(Tmp.v1.x, Tmp.v1.y, 2);
+                }
 
                 Draw.color();
                 Drawf.text(Strings.fixed(entry.distToFront, 0), entx, enty + 8, Color.white);
@@ -896,6 +899,16 @@ public class ConveyorGraph {
 
             direction.set(end).sub(start).setLength(1);
             nodes.addAll(start);
+        }
+
+        public ConveyorEntry removeFront(){
+            ConveyorEntry front = entries.firstOpt();
+            entries.remove(0);
+            frontIndex = 0;
+            if (entries.isEmpty()) startGap = length;
+            else entries.first().next = null;
+
+            return front;
         }
 
         //Append the target node onto the end of this highway.

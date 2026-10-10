@@ -1,17 +1,13 @@
-package main.blocks;
+package main.blocks.environment;
 
 import arc.math.Mathf;
 import arc.scene.ui.layout.Stack;
 import arc.struct.Seq;
-import arc.util.Log;
 import main.content.blocks.DelveEnvBlocks;
 import mindustry.content.Fx;
-import mindustry.game.Team;
 import mindustry.gen.Teamc;
-import mindustry.gen.UnitEntity;
 import mindustry.world.Block;
 
-import arc.Core;
 import arc.Graphics;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
@@ -20,25 +16,15 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Bits;
 import arc.util.Scaling;
 import arc.util.Strings;
-import arc.util.io.Reads;
-import arc.util.io.Writes;
 import mindustry.Vars;
-import mindustry.content.Blocks;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
 import mindustry.graphics.Layer;
-import mindustry.graphics.Pal;
-import mindustry.input.MobileInput;
-import mindustry.io.TypeIO;
-import mindustry.mod.Mod;
 import mindustry.type.Category;
 import mindustry.type.Item;
 import mindustry.type.ItemStack;
 import mindustry.type.Liquid;
-import mindustry.ui.Bar;
-import mindustry.world.Block;
 import mindustry.world.Tile;
-import mindustry.world.blocks.logic.LogicBlock;
 import mindustry.world.meta.BuildVisibility;
 import mindustry.world.meta.StatUnit;
 import mindustry.world.modules.ItemModule;
@@ -46,20 +32,6 @@ import mindustry.world.modules.ItemModule;
 import java.util.Iterator;
 
 public class ItemPile extends Block {
-
-    public static ModTile tmpTile = new ModTile(-1, -1);
-
-    public static class ModTile extends Tile{
-
-        public ModTile(int x, int y) {
-            super(x, y);
-        }
-
-        @Override
-        public void setBlock(Block type) {
-            block = type;
-        }
-    }
 
     public static boolean dumpItems(int x, int y, ItemStack stack){
         Tile t = Vars.world.tile(x, y);

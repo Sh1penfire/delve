@@ -12,7 +12,7 @@ import mindustry.type.ItemStack;
 import mindustry.world.Block;
 
 public class DelveProdBlocks {
-    public static Block blaster, vacuum, beamer, gasKiln;
+    public static Block blaster, vacuum, beamer, gasKiln, dumpie;
 
     public static DelveConveyorBlock graph;
 
@@ -40,7 +40,7 @@ public class DelveProdBlocks {
             size = 2;
         }};
 
-        RandomDumperBlock dumpie = new RandomDumperBlock("dumpie :D"){{
+        dumpie = new RandomDumperBlock("dumpie :D"){{
             requirements(Category.production, ItemStack.with());
             size = 2;
         }};

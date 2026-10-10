@@ -4,14 +4,14 @@ import arc.graphics.g2d.Fill;
 import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import arc.struct.ObjectMap;
-import arc.util.Log;
 import arc.util.Tmp;
-import main.DelveGeometry;
+import main.blocks.environment.ItemPile;
+import main.blocks.environment.ItemStatePile;
+import main.blocks.environment.OreBlock;
 import main.content.blocks.DelveEnvBlocks;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Fx;
-import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.world.Block;
 import mindustry.world.Tile;
@@ -65,7 +65,7 @@ public class WallBlaster extends Block {
 
                     Fx.smoke.at(t);
 
-                    if(t.solid() && !(t.build instanceof ItemPile.ItemPileBuild)) {
+                    if(t.solid() && !(t.build instanceof ItemStatePile.ItemStatePileBuild)) {
 
                         if(lastValid == null || lastValid.block() != Blocks.air) break;
 

@@ -1,9 +1,13 @@
 package main.blocks.distrib;
 
+import arc.math.geom.Geometry;
 import arc.util.Log;
+import main.blocks.environment.ItemStatePile;
+import main.blocks.interfaces.ItemStateBlock;
 import main.graphs.ConveyorGraph;
 import main.items.DelveItem;
 import main.items.ItemEntryIDMap;
+import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.game.Team;
 import mindustry.gen.Building;
@@ -20,7 +24,7 @@ public class DelveConveyorBlock extends Block {
 
     public float speed = Vars.tilesize/60f;
 
-    public class DelveConveyorBuild extends Building {
+    public class DelveConveyorBuild extends Building implements ItemStateBlock {
         public ConveyorGraph graph;
         //The vetex that outputs from this building
         public ConveyorGraph.Vertex vertex;
@@ -34,25 +38,54 @@ public class DelveConveyorBlock extends Block {
 
         public int lastRot = 0;
 
-        public void updateState(ConveyorGraph.ConveyorEntry entry){
+        @Override
+        public boolean acceptsItemState(ItemState state) {
+            return node.toHighway != null && state != null && state.size <= node.toHighway.startGap;
+        }
+
+        @Override
+        public void handleState(ItemState state) {
+            graph.handleEntry(node.toHighway, new ConveyorGraph.ConveyorEntry(state));
+        }
+
+        /*
+        @Override
+        public void removeState(ItemState state) {
 
         }
+         */
 
         @Override
         public void update() {
             super.update();
             graph.update();
+            if(back() instanceof ItemStatePile.ItemStatePileBuild pile){
+                var itemState = pile.topState();
+
+                if(acceptsItemState(itemState)){
+                    pile.removeState(itemState);
+                    handleState(itemState);
+                }
+            }
             if(node.toHighway == null) node.fromHighways.each(highway -> {
                 ConveyorGraph.ConveyorEntry entry = highway.entries.firstOpt();
                 if(entry == null || entry.distToFront > 0) return;
-                Building target = front();
-                if(target == null || !target.acceptItem(this, entry.itemState.type)) return;
 
-                highway.entries.remove(0);
-                highway.frontIndex = 0;
-                target.handleItem(this, entry.itemState.type);
-                if(highway.entries.isEmpty()) highway.startGap = highway.length;
-                else highway.entries.first().next = null;
+                if(front() instanceof ItemStateBlock target){
+
+                    if (target == null || !target.acceptsItemState(entry.itemState)) return;
+
+                    highway.entries.remove(0);
+                    highway.frontIndex = 0;
+                    target.handleState(entry.itemState);
+                    if (highway.entries.isEmpty()) highway.startGap = highway.length;
+                    else highway.entries.first().next = null;
+                }
+                else if(front() == null){
+                    highway.removeFront();
+                    var offset = Geometry.d4(rotation);
+                    ItemStatePile.create(tile.x + offset.x, tile.y + offset.y, entry.itemState);
+                }
             });
         }
 

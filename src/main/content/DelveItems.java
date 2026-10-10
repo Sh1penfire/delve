@@ -2,6 +2,7 @@ package main.content;
 
 import arc.graphics.Color;
 import main.items.DelveItem;
+import main.items.SpoilageItem;
 import main.meta.MeldStats;
 import main.type.ItemAttributes;
 import mindustry.Vars;
@@ -10,6 +11,8 @@ import mindustry.type.Item;
 public class DelveItems {
 
     public static Item stone, rust, geothite, malachite, azuritePowder, shadesteel, progenate;
+
+    public static DelveItem bionorb;
 
     public static Item[] propulites;
 
@@ -52,6 +55,10 @@ public class DelveItems {
 
         progenate = new DelveItem("procrium", Color.valueOf("9d755d")){{
 
+        }};
+
+        bionorb = new SpoilageItem("bionorb"){{
+            size = 8;
         }};
 
         Vars.content.items().each(i -> {

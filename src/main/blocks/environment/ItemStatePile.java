@@ -1,64 +1,53 @@
-package main.blocks;
+package main.blocks.environment;
 
-import arc.Core;
 import arc.Graphics;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
+import arc.math.Mathf;
 import arc.scene.ui.Image;
+import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.Bits;
-import arc.util.Log;
+import arc.struct.Seq;
 import arc.util.Scaling;
 import arc.util.Strings;
-import arc.util.Time;
-import arc.util.io.Reads;
-import arc.util.io.Writes;
-import main.content.DelveItems;
+import main.blocks.interfaces.ItemStateBlock;
 import main.content.blocks.DelveEnvBlocks;
+import main.type.ItemState;
 import mindustry.Vars;
-import mindustry.content.Blocks;
 import mindustry.content.Fx;
-import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
+import mindustry.gen.Teamc;
 import mindustry.graphics.Layer;
-import mindustry.graphics.Pal;
-import mindustry.input.MobileInput;
-import mindustry.io.TypeIO;
-import mindustry.mod.Mod;
 import mindustry.type.Category;
 import mindustry.type.Item;
 import mindustry.type.ItemStack;
 import mindustry.type.Liquid;
-import mindustry.ui.Bar;
 import mindustry.world.Block;
 import mindustry.world.Tile;
-import mindustry.world.blocks.logic.LogicBlock;
 import mindustry.world.meta.BuildVisibility;
 import mindustry.world.meta.StatUnit;
 import mindustry.world.modules.ItemModule;
 
 import java.util.Iterator;
 
-public class OreBlock extends Block {
+public class ItemStatePile extends Block{
 
-    public static ModTile tmpTile = new ModTile(-1, -1);
+    public static ItemStatePileBuild create(int x, int y, ItemState state){
+        Tile tile = Vars.world.tile(x, y);
+        tile.setBlock(DelveEnvBlocks.statePile);
+        tile.build.team = Vars.state.rules.defaultTeam;
+        var pile = (ItemStatePileBuild) tile.build;
+        pile.handleState(state);
 
-    public static class ModTile extends Tile{
-
-        public ModTile(int x, int y) {
-            super(x, y);
-        }
-
-        @Override
-        public void setBlock(Block type) {
-            block = type;
-        }
+        return (ItemStatePileBuild) tile.build;
     }
 
-    public OreBlock(String name) {
+    public ItemStatePile(String name) {
         super(name);
         destructible = true;
+        update = true;
         breakable = false;
         targetable = false;
         solid = true;
@@ -67,15 +56,15 @@ public class OreBlock extends Block {
         buildVisibility = BuildVisibility.sandboxOnly;
         category = Category.effect;
 
-
         allowDerelictRepair = false;
+
+        destroyEffect = Fx.none;
     }
 
     @Override
     public void setBars() {
         super.setBars();
         removeBar("health");
-        addBar("stability", b -> new Bar(() -> "Layer Health: " + b.health, () -> Pal.accent, b::healthf).blink(Color.black));
     }
 
     @Override
@@ -97,30 +86,52 @@ public class OreBlock extends Block {
         return Vars.state.rules.editor || Vars.state.playtestingMap != null || Vars.state.rules.infiniteResources;
     }
 
-    //regular walls get converted to these when drill blasts hit them.
-    public class OreBlockBuild extends Building{
-        public ItemStack[] material;
-        public Block parent;
+    //Physical item states in the world
+    public class ItemStatePileBuild extends Building implements ItemStateBlock {
+
+        public Seq<ItemState> states = new Seq<>();
+
+        @Override
+        public void update() {
+            super.update();
+            states.each(ItemState::update);
+        }
+
+        @Override
+        public void handleState(ItemState state) {
+            states.add(state);
+            state.x = x;
+            state.y = y;
+        }
+
+        @Override
+        public void removeState(ItemState state) {
+            states.remove(state);
+            if(states.isEmpty()) kill();
+        }
+
+        @Override
+        public ItemState topState() {
+            return states.peek();
+        }
 
         @Override
         public boolean collide(Bullet other) {
             return false;
         }
 
-        @Override
-        public void killed() {
-            super.killed();
-            tile.setBlock(DelveEnvBlocks.itemPile);
-            tile.build.items.set(DelveItems.stone, 100);
-            tile.build.items.set(DelveItems.rust, 100);
-            tile.build.team = Vars.state.rules.defaultTeam;
-        }
-
-        //Literally all of the shit below is visual until the read/write
+        int stackOffset;
         @Override
         public void draw() {
             Draw.z(Layer.blockUnder);
-            parent.drawBase(tile);
+
+            Mathf.rand.setSeed(id);
+            stackOffset = 0;
+
+            states.each(state -> {
+                stackOffset++;
+                state.draw();
+            });
         }
 
         @Override
@@ -137,15 +148,38 @@ public class OreBlock extends Block {
             return (!accessible() ? Graphics.Cursor.SystemCursor.arrow : super.getCursor());
         }
 
+        String itemName = null;
+        float imageoffset = 0;
+        int i = 0;
+
         @Override
         public void display(Table table) {
+            imageoffset = 0;
             table.table((t) -> {
                 t.left();
 
-                tmpTile.setBlock(parent);
 
-                t.add(new Image(this.parent.getDisplayIcon(tmpTile))).scaling(Scaling.fit).size(32.0F);
-                t.labelWrap(this.parent.getDisplayName(tmpTile) + "[lightgray] (Ore)[]").left().width(190.0F).padLeft(5.0F);
+                Seq<Image> images = Seq.with();
+                i = 0;
+
+                states.each(item -> {
+                    i++;
+                    Image image = new Image(item.type.uiIcon);
+                    image.rotateBy(imageoffset);
+                    images.add(image);
+
+                    imageoffset += 15;
+                    itemName = item.type.localizedName;
+                });
+                t.table(itemTable -> {
+
+                    Stack stack = new Stack();
+                    images.each(stack::addChild);
+                    itemTable.add(stack);
+
+                }).scaling(Scaling.fit).size(32);
+
+                t.labelWrap(i == 1 ? itemName + "[lightgray] Stack[]" : "[lightgray] Mixed Stack[]").left().width(190).padLeft(5);
             }).growX().left();
             table.row();
 
@@ -237,24 +271,6 @@ public class OreBlock extends Block {
                 table.marginBottom(-5.0F);
             }
         }
-
-        @Override
-        public void placed() {
-            super.placed();
-            parent = Blocks.stone;
-        }
-
-        @Override
-        public void write(Writes write) {
-            super.write(write);
-            TypeIO.writeBlock(write, parent);
-        }
-
-        @Override
-        public void read(Reads read, byte revision) {
-            super.read(read, revision);
-            parent = TypeIO.readBlock(read);
-            if(healthf() == 1) tile.setBlock(parent);
-        }
     }
 }
+
