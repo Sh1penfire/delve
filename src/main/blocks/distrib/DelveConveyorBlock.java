@@ -3,7 +3,7 @@ package main.blocks.distrib;
 import arc.math.geom.Geometry;
 import arc.util.Log;
 import main.blocks.environment.ItemStatePile;
-import main.blocks.interfaces.ItemStateBlock;
+import main.blocks.interfaces.ItemStateHolder;
 import main.graphs.ConveyorGraph;
 import main.items.DelveItem;
 import main.items.ItemEntryIDMap;
@@ -24,7 +24,7 @@ public class DelveConveyorBlock extends Block {
 
     public float speed = Vars.tilesize/60f;
 
-    public class DelveConveyorBuild extends Building implements ItemStateBlock {
+    public class DelveConveyorBuild extends Building implements ItemStateHolder {
         public ConveyorGraph graph;
         //The vetex that outputs from this building
         public ConveyorGraph.Vertex vertex;
@@ -71,7 +71,7 @@ public class DelveConveyorBlock extends Block {
                 ConveyorGraph.ConveyorEntry entry = highway.entries.firstOpt();
                 if(entry == null || entry.distToFront > 0) return;
 
-                if(front() instanceof ItemStateBlock target){
+                if(front() instanceof ItemStateHolder target){
 
                     if (target == null || !target.acceptsItemState(entry.itemState)) return;
 
@@ -83,6 +83,7 @@ public class DelveConveyorBlock extends Block {
                 }
                 else if(front() == null){
                     highway.removeFront();
+                    entry.itemState.parrent = null;
                     var offset = Geometry.d4(rotation);
                     ItemStatePile.create(tile.x + offset.x, tile.y + offset.y, entry.itemState);
                 }

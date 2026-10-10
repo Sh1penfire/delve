@@ -2,12 +2,12 @@ package main.blocks.interfaces;
 
 import main.type.ItemState;
 
-public interface ItemStateBlock {
+//Interface for anything which can hold item states.
+public interface ItemStateHolder {
 
     default ItemState topState(){
         return null;
     }
-
 
     //Whether this entity can accept this item state
     default boolean acceptsItemState(ItemState state){
@@ -19,6 +19,5 @@ public interface ItemStateBlock {
 
     //Remove the item state
     default void removeState(ItemState state){
-
     };
 }

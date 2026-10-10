@@ -10,13 +10,12 @@ import arc.math.geom.Vec2;
 import arc.struct.Seq;
 import arc.util.*;
 import main.blocks.distrib.DelveConveyorBlock;
+import main.blocks.interfaces.ItemStateHolder;
 import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Fx;
-import mindustry.content.Items;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
-import mindustry.type.Item;
 
 public class ConveyorGraph {
 
@@ -643,6 +642,9 @@ public class ConveyorGraph {
             nextHighway.entries.add(entry);
             nextHighway.startGap = 0;
 
+            //Asign the item state's parrent to the next highway
+            entry.itemState.parrent = nextHighway;
+
             //If the highway is empty, make the start gap the length of the highway
             if(highway.entries.isEmpty()) highway.startGap = highway.length;
 
@@ -704,6 +706,7 @@ public class ConveyorGraph {
                 entry.x = x;
                 entry.y = y;
                 entry.update(x, y);
+                Log.info(entry.itemState.parrent);
             });
         });
     }
@@ -841,21 +844,23 @@ public class ConveyorGraph {
     }
 
     //Handle a new entry to the graph popped onto the start of a highway
-    public boolean handleEntry(Highway highway, ConveyorEntry itemState){
+    public boolean handleEntry(Highway highway, ConveyorEntry entry){
+        entry.itemState.parrent = highway;
+
         try {
             //If theres no entries on the highway currently, add the state and set the distance to its fromt to the highway's length
             if(highway.entries.size == 0){
-                highway.entries.add(itemState);
-                itemState.distToFront = highway.length;
+                highway.entries.add(entry);
+                entry.distToFront = highway.length;
             }
             //If there *are* entries on the highway currently, then attach this item state onto the next item state
             else{
                 //Attach the entry onto the last possible
-                itemState.next = highway.entries.peek();
+                entry.next = highway.entries.peek();
 
                 //Add the entry to the target highway's list
-                highway.entries.add(itemState);
-                itemState.distToFront = highway.startGap;
+                highway.entries.add(entry);
+                entry.distToFront = highway.startGap;
             }
 
             //Nuke the start gap now that theres an entry here
@@ -869,7 +874,7 @@ public class ConveyorGraph {
     }
 
     //Stores information about the connections between intersections & corners, as well as item states
-    public static class Highway{
+    public static class Highway implements ItemStateHolder {
 
         @Override
         public String toString() {
@@ -899,6 +904,50 @@ public class ConveyorGraph {
 
             direction.set(end).sub(start).setLength(1);
             nodes.addAll(start);
+        }
+
+        @Override
+        public void removeState(ItemState state) {
+            if(state == null) return;
+
+            int foundIndex = 0;
+            boolean found = false;
+            ConveyorEntry foundEntry = null;
+            for (ConveyorEntry entry: entries){
+                if(entry.itemState != state && !found) {
+                    foundIndex++;
+                    continue;
+                }
+
+                if(found){
+                    if(foundIndex > 0) {
+                        entry.next = entries.get(foundIndex - 1);
+                        frontIndex = 0;
+                    }
+                    entry.distToFront += foundEntry.distToFront;
+                    break;
+                }
+
+                foundEntry = entry;
+                found = true;
+            }
+
+            //If this is the backmost entry then yknow
+            if(foundIndex == entries.size - 1) startGap += foundEntry.distToFront;
+
+            entries.remove(foundIndex);
+            if(entries.isEmpty()) {
+                startGap = length;
+                frontIndex = 0;
+            }
+
+
+            state.parrent = null;
+        }
+
+        @Override
+        public ItemState topState() {
+            return entries.isEmpty() ? null : entries.firstOpt().itemState;
         }
 
         public ConveyorEntry removeFront(){

@@ -59,6 +59,7 @@ public class DelveItems {
 
         bionorb = new SpoilageItem("bionorb"){{
             size = 8;
+            defaultFreshness = 60;
         }};
 
         Vars.content.items().each(i -> {

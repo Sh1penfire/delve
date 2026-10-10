@@ -11,18 +11,17 @@ import arc.struct.Bits;
 import arc.struct.Seq;
 import arc.util.Scaling;
 import arc.util.Strings;
-import main.blocks.interfaces.ItemStateBlock;
+import main.blocks.interfaces.ItemStateHolder;
 import main.content.blocks.DelveEnvBlocks;
 import main.type.ItemState;
 import mindustry.Vars;
+import mindustry.content.Blocks;
 import mindustry.content.Fx;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
-import mindustry.gen.Teamc;
 import mindustry.graphics.Layer;
 import mindustry.type.Category;
 import mindustry.type.Item;
-import mindustry.type.ItemStack;
 import mindustry.type.Liquid;
 import mindustry.world.Block;
 import mindustry.world.Tile;
@@ -59,6 +58,7 @@ public class ItemStatePile extends Block{
         allowDerelictRepair = false;
 
         destroyEffect = Fx.none;
+        baseShake = 0;
     }
 
     @Override
@@ -87,7 +87,7 @@ public class ItemStatePile extends Block{
     }
 
     //Physical item states in the world
-    public class ItemStatePileBuild extends Building implements ItemStateBlock {
+    public class ItemStatePileBuild extends Building implements ItemStateHolder {
 
         public Seq<ItemState> states = new Seq<>();
 
@@ -100,6 +100,7 @@ public class ItemStatePile extends Block{
         @Override
         public void handleState(ItemState state) {
             states.add(state);
+            state.parrent = this;
             state.x = x;
             state.y = y;
         }
@@ -107,12 +108,16 @@ public class ItemStatePile extends Block{
         @Override
         public void removeState(ItemState state) {
             states.remove(state);
-            if(states.isEmpty()) kill();
+            state.parrent = null;
+            if(states.isEmpty()) {
+                //Remove this building without triggering that damm char effect that I hate
+                tile.setBlock(Blocks.air);
+            }
         }
 
         @Override
         public ItemState topState() {
-            return states.peek();
+            return states.size == 0 ? null : states.peek();
         }
 
         @Override

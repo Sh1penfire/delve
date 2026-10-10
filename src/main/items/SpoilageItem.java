@@ -34,12 +34,14 @@ public class SpoilageItem extends DelveItem{
         }
     }
 
-    public float defaultFreshness = 60 * 12;
+    //Default is 30 secconds just so that this is visible enough
+    public float defaultFreshness = 60 * 30;
 
 
     @Override
     public void update(ItemState state, float x, float y) {
         float freshness = state.data.get("freshness", defaultFreshness);
+        if(freshness == 0) state.parrent.removeState(state);
         state.data.put("freshness", Math.max(freshness - Time.delta, 0));
     }
 
@@ -54,7 +56,7 @@ public class SpoilageItem extends DelveItem{
         float width = Vars.tilesize * 0.8f;
         Draw.color(Color.gray);
         Lines.stroke(2);
-        Lines.line(x - width/2f, dy, x + width * (freshFract - 0.5f), dy);
+        Lines.line(x - width/2f, dy, x + width/2f, dy);
         Draw.color(Color.white);
         Lines.stroke(1);
         Lines.line(x - width/2f, dy, x + width * (freshFract - 0.5f), dy);
