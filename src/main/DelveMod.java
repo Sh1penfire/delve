@@ -6,15 +6,17 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.struct.Seq;
 import arc.util.*;
+import main.blocks.EnergyField;
 import main.blocks.WallBlaster;
 import main.blocks.distrib.DelveConveyorBlock;
+import main.blocks.interfaces.ItemStateHolder;
 import main.content.DelveAspects;
 import main.content.DelveItems;
-import main.content.blocks.DelveEnvBlocks;
-import main.content.blocks.DelveProdBlocks;
+import main.content.blocks.*;
 import main.content.DelveUnits;
 import main.content.modifiers.VanillaCostModifier;
 import main.graphs.ConveyorGraph;
+import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.game.EventType;
@@ -31,21 +33,25 @@ public class DelveMod extends Mod{
     public static NativeJavaPackage p = null;
 
     public DelveMod(){
-
+        EnergyField.init();
     }
 
+    float dx, dy;
     @Override
     public void loadContent(){
 
         Events.run(EventType.Trigger.drawOver, () -> {
             Draw.z(Layer.flyingUnit);
             Tmp.v1.set(Core.input.mouseWorld());
+
+            dx = Tmp.v1.x;
+            dy = Tmp.v1.y;
+
             Building build = Vars.world.buildWorld(Tmp.v1);
             if(build instanceof DelveConveyorBlock.DelveConveyorBuild b){
                 ConveyorGraph.ConveyorNode node = b.node;
                 if(node == null) return;
 
-                float dx = Tmp.v1.x, dy = Tmp.v1.y;
                 dx += 5;
                 dy += 3;
 
@@ -59,13 +65,27 @@ public class DelveMod extends Mod{
                     dx += 1;
                 }
             }
+            if(build instanceof ItemStateHolder holder){
+                Seq<ItemState> list = holder.list();
+                if(list != null) list.each(state -> {
+                    if(state.attributes != null) state.attributes.map.each((entry) -> {
+                        Drawf.text(Strings.format("@: @", entry.key, Strings.fixed(entry.value, 1)), dx, dy, Color.red);
+                        dy -= 3;
+                        dx += 1;
+                    });
+                });
+            }
         });
 
         DelveUnits.load();
         DelveAspects.load();
         DelveItems.load();
+
         DelveProdBlocks.load();
+        DelvePowerBlocks.load();
         DelveEnvBlocks.load();
+        DelveStorageBlocks.load();
+        DelveDistribBlocks.load();
 
         VanillaCostModifier.load();
 
@@ -84,6 +104,7 @@ public class DelveMod extends Mod{
 
         Seq<String> packages = Seq.with(
                 "main",
+                "main.blocks",
                 "main.content",
                 "main.content.blocks",
                 "main.world",

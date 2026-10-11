@@ -11,8 +11,11 @@ import arc.struct.Bits;
 import arc.struct.Seq;
 import arc.util.Scaling;
 import arc.util.Strings;
+import arc.util.io.Reads;
+import arc.util.io.Writes;
 import main.blocks.interfaces.ItemStateHolder;
 import main.content.blocks.DelveEnvBlocks;
+import main.io.ModdedTypeIO;
 import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Blocks;
@@ -51,6 +54,7 @@ public class ItemStatePile extends Block{
         targetable = false;
         solid = true;
         rebuildable = false;
+        solid = false;
 
         buildVisibility = BuildVisibility.sandboxOnly;
         category = Category.effect;
@@ -90,6 +94,11 @@ public class ItemStatePile extends Block{
     public class ItemStatePileBuild extends Building implements ItemStateHolder {
 
         public Seq<ItemState> states = new Seq<>();
+
+        @Override
+        public Seq<ItemState> list() {
+            return states;
+        }
 
         @Override
         public void update() {
@@ -174,7 +183,7 @@ public class ItemStatePile extends Block{
                     images.add(image);
 
                     imageoffset += 15;
-                    itemName = item.type.localizedName;
+                    itemName = item.localizedName();
                 });
                 t.table(itemTable -> {
 
@@ -275,6 +284,21 @@ public class ItemStatePile extends Block{
                 }
                 table.marginBottom(-5.0F);
             }
+        }
+
+        @Override
+        public void read(Reads read, byte revision) {
+            super.read(read, revision);
+            states = ModdedTypeIO.readStates(read);
+            states.each(s -> {
+                s.parrent = this;
+            });
+        }
+
+        @Override
+        public void write(Writes write) {
+            super.write(write);
+            ModdedTypeIO.writeStates(write, states);
         }
     }
 }

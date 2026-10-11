@@ -9,6 +9,9 @@ public class ItemAttributes {
 
     public static ObjectMap<Item, AttributeData> map = new ObjectMap<>();
 
+    //Map of each item attribute's id to an item
+    public static ObjectMap<String, Item> pureMap = new ObjectMap<>();
+
     public static AttributeData register(Item item){
         AttributeData data = new AttributeData();
         map.put(item, data);
@@ -29,6 +32,10 @@ public class ItemAttributes {
 
     public static class AttributeData{
         public ObjectFloatMap<String> map = new ObjectFloatMap<>();
+
+        public void set(AttributeData data){
+            map.set(data.map);
+        }
 
         public AttributeData put(ItemAttribute attribute, float amount){
             map.put(attribute.name, amount);

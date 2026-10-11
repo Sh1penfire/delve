@@ -9,6 +9,8 @@ import arc.math.Mathf;
 import arc.struct.ObjectFloatMap;
 import arc.util.Nullable;
 import main.graphs.ConveyorGraph;
+import main.meta.MeldStats;
+import main.type.ItemAttributes;
 import main.type.ItemState;
 import mindustry.game.EventType;
 import mindustry.graphics.Layer;
@@ -25,6 +27,8 @@ public class DelveItem extends Item {
 
     public int size = 4;
 
+    public boolean stackable, runsOut;
+
     public Prov<ItemState> constructor = () -> new UpdateItemState(this, size);
 
     public void update(ItemState state, float x, float y){
@@ -35,19 +39,40 @@ public class DelveItem extends Item {
         Draw.rect(state.type.fullIcon, x, y);
     };
 
+    @Override
+    public void setStats() {
+        super.setStats();
+        MeldStats.itemAttributes(this, stats);
+    }
+
     public class UpdateItemState extends ItemState {
 
         public DelveItem item;
 
         public UpdateItemState(DelveItem item, float size) {
             super(item, size);
+            attributes = ItemAttributes.get(item);
             this.item = item;
             data = new ObjectFloatMap<>();
+        }
+        public UpdateItemState(float size) {
+            super(size);
+            data = new ObjectFloatMap<>();
+        }
+
+        @Override
+        public void tweakCondition(float offset) {
+            super.tweakCondition(offset);
         }
 
         @Override
         public void update() {
             item.update(this, x, y);
+        }
+
+        @Override
+        public boolean canCombine(ItemState other) {
+            return stackable && super.canCombine(other);
         }
 
         @Override
@@ -60,12 +85,12 @@ public class DelveItem extends Item {
 
     public DelveItem(String name, Color color) {
         super(name, color);
-        ItemEntryIDMap.put(this, constructor);
     }
 
     @Override
     public void init() {
         super.init();
+        ItemEntryIDMap.put(this, constructor);
 
         if(altNames > 0){
             namesList = new String[altNames];

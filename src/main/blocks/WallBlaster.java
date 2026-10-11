@@ -5,7 +5,6 @@ import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import arc.struct.ObjectMap;
 import arc.util.Tmp;
-import main.blocks.environment.ItemPile;
 import main.blocks.environment.ItemStatePile;
 import main.blocks.environment.OreBlock;
 import main.content.blocks.DelveEnvBlocks;
@@ -13,12 +12,14 @@ import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Fx;
 import mindustry.gen.Building;
+import mindustry.type.Item;
 import mindustry.world.Block;
 import mindustry.world.Tile;
+import mindustry.world.blocks.environment.StaticWall;
 
 public class WallBlaster extends Block {
 
-    public static ObjectMap<Block, Block> map = new ObjectMap<>();
+    public static ObjectMap<Block, Item> itemDropMap = new ObjectMap<>();
 
     public float reload, range;
 
@@ -26,7 +27,7 @@ public class WallBlaster extends Block {
         super(name);
         update = true;
 
-        reload = 300;
+        reload = 60;
         range = 9;
 
         rotate = true;
@@ -65,20 +66,21 @@ public class WallBlaster extends Block {
 
                     Fx.smoke.at(t);
 
-                    if(t.solid() && !(t.build instanceof ItemStatePile.ItemStatePileBuild)) {
+                    if(t.solid()) {
 
                         if(lastValid == null || lastValid.block() != Blocks.air) break;
 
-                        if(!(t.build instanceof OreBlock.OreBlockBuild)){
+                        //Switch static walls to ore block
+                        if(t.build == null && t.block().solid){
                             Block wall = t.block();
                             t.setBlock(DelveEnvBlocks.oreBlock);
-                            ((OreBlock.OreBlockBuild) t.build).parent = wall;
+                            ((OreBlock.OreBlockBuild) t.build).parrent = wall;
 
                             //TODO: Switch to derelict when allowDerelictRepair:false actually works as intended
                             t.build.team = Vars.state.rules.defaultTeam;
                         };
 
-                        t.build.damage(20);
+                        if(t.build != null) t.build.damage(20);
                         break;
                     }
                     lastValid = t;

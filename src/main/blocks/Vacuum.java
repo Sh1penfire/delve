@@ -59,6 +59,7 @@ public class Vacuum extends Block {
                             ItemPile.dumpItems(tile.x - offset.x * trueOffset, tile.y - offset.y * trueOffset, new ItemStack(item, itemsTakenOff));
                         });
                     }
+                    return false;
                 });
             }
         }

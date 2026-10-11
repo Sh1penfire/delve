@@ -146,7 +146,7 @@ public class LaserGun extends Weapon {
                         if(t.block() != null && t.build == null){
                             Block wall = t.block();
                             t.setBlock(DelveEnvBlocks.oreBlock);
-                            ((OreBlock.OreBlockBuild) t.build).parent = wall;
+                            ((OreBlock.OreBlockBuild) t.build).parrent = wall;
 
                             //TODO: Switch to derelict when allowDerelictRepair:false actually works as intended
                             t.build.team = Vars.state.rules.defaultTeam;

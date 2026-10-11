@@ -52,7 +52,6 @@ public class RecipeCrafter extends Block {
                     Fx.fire.at(b);
                     RecipeCrafter.add(b);
                 });
-                Log.info(totalItems);
             }
 
         }

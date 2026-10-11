@@ -14,6 +14,7 @@ import main.blocks.interfaces.ItemStateHolder;
 import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Fx;
+import mindustry.game.Team;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 
@@ -28,7 +29,6 @@ public class ConveyorGraph {
     public float updateTimestamp;
 
     public Seq<Highway> highways = new Seq<>();
-    public Seq<Vertex> vertices = new Seq<>();
     public Seq<ConveyorNode> nodes = new Seq<>();
     public Seq<DelveConveyorBlock.DelveConveyorBuild> builds = new Seq<>();
 
@@ -45,7 +45,7 @@ public class ConveyorGraph {
 
     @Override
     public String toString() {
-        return Strings.format("Conveyor Graph #@, \nNodes: @\nVertexes: @\nHighways: @", id, nodes, vertices, highways);
+        return Strings.format("Conveyor Graph #@, \nNodes: @\nHighways: @", id, nodes, highways);
     }
 
     /**
@@ -57,7 +57,6 @@ public class ConveyorGraph {
     public void merge(ConveyorNode source, ConveyorNode target, ConveyorGraph targetGraph){
         if(targetGraph != this){
             targetGraph.nodes.addAll(nodes);
-            targetGraph.vertices.addAll(vertices);
             targetGraph.highways.addAll(highways);
 
             builds.each(b -> {
@@ -68,12 +67,12 @@ public class ConveyorGraph {
 
         targetGraph.connect(source, target);
     }
-    //Removes a vertex, and derefrences it
-    public void removeVertex(Vertex vertex){
-        vertex.start.toVertex = null;
-        vertex.end.fromVertexes.remove(vertex);
-        vertices.remove(vertex);
+
+    public void disconnectNode(ConveyorNode source, ConveyorNode target){
+        source.toNode = null;
+        target.fromNodes.remove(source);
     }
+
     //Removes a highway, and derefrences it
     public void removeHighway(Highway highway){
         highway.start.toHighway = null;
@@ -85,7 +84,6 @@ public class ConveyorGraph {
     Vec2 tmpDirection = new Vec2();
 
     public Seq<ConveyorNode> toVistit = new Seq<>(), currentlyVistiting = new Seq<>(), seen = new Seq<>();
-    public Seq<Vertex> vertexList = new Seq<>();
     public Seq<Highway> highwayList = new Seq<>();
     //build.graph.explosionNoises(build.node, null)
 
@@ -145,7 +143,7 @@ public class ConveyorGraph {
     public Highway handleSplit(Highway splitTarget, ConveyorNode source, ConveyorNode target){
 
         //Create a new highway between the target and the end of the current highway
-        Log.info("Creating new highway from @ to @", target, splitTarget.end);
+        Log.debug("Creating new highway from @ to @", target, splitTarget.end);
         Highway newHighway = addHighway(target, splitTarget.end);
 
         //Source now isn't connected to any highway
@@ -156,14 +154,14 @@ public class ConveyorGraph {
         while (next != null && next != splitTarget.end){
             if(next != target) next.fromHighways.add(newHighway);
             next.fromHighways.remove(splitTarget);
-            if(next.toVertex != null) next = next.toVertex.end;
+            next = next.toNode;
         }
         splitTarget.end.fromHighways.remove(splitTarget);
 
 
         //Shrink by the distance from the splitTarget's new end to the previous ending
         float shrinkAmount = source.dst(splitTarget.end);
-        Log.info("Shrinking from @, to @ by @", splitTarget.end, source, shrinkAmount);
+        Log.debug("Shrinking from @, to @ by @", splitTarget.end, source, shrinkAmount);
 
         //Shrink the current highway all the way back to the source after calculating that
         splitTarget.end = source;
@@ -217,9 +215,9 @@ public class ConveyorGraph {
 
             //Shrink the distance of this item to the front by the two thresholds, since we're keeping it on the current shrunken highway
             float shrinkDist = newDistThreshold + gap - lastFrontDst;
-            Log.info("Ending found: Distance: @, Shrinking by: @", entry.distToFront, shrinkDist);
+            Log.debug("Ending found: Distance: @, Shrinking by: @", entry.distToFront, shrinkDist);
             entry.distToFront -= shrinkDist;
-            Log.info("New Distance: @", entry.distToFront);
+            Log.debug("New Distance: @", entry.distToFront);
             entry.stateString = "Start";
 
             splitTarget.frontIndex = 0;
@@ -245,18 +243,17 @@ public class ConveyorGraph {
 
         //Target highway to split or remove
         Highway splitTarget = source.toHighway;
-        Vertex vertexTarget = source.toVertex;
 
         //This process again, but assume source & target are already linked via vertex & look at the vertexes instead
-        boolean sourceLonely = source.fromVertexes.size == 0;
-        boolean targetLonely = target.toVertex == null;
+        boolean sourceLonely = source.fromNodes.size == 0;
+        boolean targetLonely = target.toNode == null;
 
         if(sourceLonely){
             if(targetLonely){
                 //Case 1: We actually aren't connected to anything else, and it's just the two nodes
-                Log.info("Case 1: Lonely source, Lonely target");
+                Log.debug("Case 1: Lonely source, Lonely target");
 
-                removeVertex(vertexTarget);
+                disconnectNode(source, target);
                 if (splitTarget != null) highways.remove(splitTarget);
 
                 DelveConveyorBlock.DelveConveyorBuild targetBuild = target.building;
@@ -266,8 +263,8 @@ public class ConveyorGraph {
             }
             else {
                 //Case 2: source is the starting end of a highway, so we shrink the highway fowards
-                Log.info("Case 2: Lonely source, Connected target");
-                removeVertex(vertexTarget);
+                Log.debug("Case 2: Lonely source, Connected target");
+                disconnectNode(source, target);
                 //But if we're grabbing the ends of the highway, then remove it
                 if(splitTarget.start == source && splitTarget.end == target){
                     removeHighway(splitTarget);
@@ -285,46 +282,44 @@ public class ConveyorGraph {
         else {
             if(targetLonely){
                 //Case 3: Target is actually the ending of our current highway, so we remove the target, not our source
-                Log.info("Case 3: Connected source, Lonely target");
+                Log.debug("Case 3: Connected source, Lonely target");
                 if(splitTarget == null){
-                    Log.info("ABORT ABORT ABORT SOMETHING IS TERRIBLY WRONG WHAT THE FUCK");
-                    Log.info("Source: @, Targ: @",source, target);
-                    Log.info("Vertex: @",vertexTarget);
+                    Log.debug("ABORT ABORT ABORT SOMETHING IS TERRIBLY WRONG WHAT THE FUCK");
+                    Log.debug("Source: @, Targ: @",source, target);
                     return;
                 }
-                removeVertex(vertexTarget);
+                disconnectNode(source, target);
                 shortenHighwayFront(splitTarget, source);
             }
             else {
                 //This is when we have to considder how to split/update the graph, if applicable
                 //The worst case by far, god can't save me here
-                Log.info("Case 4: Connected source, Connected target");
-                Log.info("Source: @, Target: @", source, target);
+                Log.debug("Case 4: Connected source, Connected target");
+                Log.debug("Source: @, Target: @", source, target);
 
                 //Set tmpDirection to the direction from the source to the target in preparation for all the edge cases
                 tmpDirection.set(target).sub(source).setLength(1);
 
                 //Case 4.a: Target is the endpoint of the splitTarget (Highway), and so we can just disconnect the nodes + shorten the splitTarget backwards
                 if(splitTarget.end == target){
-                    removeVertex(vertexTarget);
+                    disconnectNode(source, target);
                     shortenHighwayFront(splitTarget, source);
                     return;
                 }
                 //Case 4.b:
                 //Source and target are inline && source is the start of the highway, so we can just shorten the target's highway like earlier
                 if(source.toHighway.start == source && splitTarget.direction.equals(tmpDirection)){
-                    Log.info("Source and vertex target: @ & @", source, source.toVertex);
-                    shortenHighwayBack(splitTarget, source.toVertex.end);
-                    removeVertex(vertexTarget);
+                    Log.debug("Source and target: @ & @", source, target);
+                    shortenHighwayBack(splitTarget, source.toNode);
+                    disconnectNode(source, target);
                 }
                 //Case 4.c: We need to... *sigh* split a vertex
                 else {
-                    Log.info("Case 4.c: Splitting the graph itself... fuck");
+                    Log.debug("Case 4.c: Splitting the graph itself... fuck");
                     //Reset all the lists... I know im going to need them
                     toVistit.clear();
                     currentlyVistiting.clear();
                     seen.clear();
-                    vertexList.clear();
                     highwayList.clear();
 
                     toVistit.add(source);
@@ -349,10 +344,9 @@ public class ConveyorGraph {
                             node.mark = true;
 
                             //Get the next nodes
-                            node.fromVertexes.each(vertex -> {
-                                currentlyVistiting.add(vertex.start);
+                            node.fromNodes.each(sourceInput -> {
+                                currentlyVistiting.add(sourceInput);
                             });
-                            vertexList.add(node.toVertex);
                             if(node.toHighway != null && node.toHighway.start == node) highwayList.add(node.toHighway);
                         });
 
@@ -362,10 +356,8 @@ public class ConveyorGraph {
 
                     handleSplit(splitTarget, source, target);
 
-                    vertices.remove(vertexTarget);
-
-                    Log.info("Is this a loop: @", loop);
-                    Log.info(highways);
+                    Log.debug("Is this a loop: @", loop);
+                    Log.debug(highways);
 
                     //Special case for if it's a loop, don't separate the graphs
                     if(loop) {
@@ -374,14 +366,12 @@ public class ConveyorGraph {
                     }
                     ConveyorGraph sourceGraph = new ConveyorGraph();
                     sourceGraph.nodes.add(seen);
-                    sourceGraph.vertices.add(vertexList);
                     sourceGraph.highways.add(highwayList);
 
                     nodes.removeAll(seen);
-                    vertices.removeAll(vertexList);
                     highways.removeAll(highwayList);
 
-                    sourceGraph.removeVertex(vertexTarget);
+                    sourceGraph.disconnectNode(source, target);
 
                     seen.each(node -> {
                         node.mark = false;
@@ -390,8 +380,7 @@ public class ConveyorGraph {
                         sourceGraph.builds.add(node.building);
                     });
 
-                    Log.info(vertexList);
-                    Log.info(highwayList);
+                    Log.debug(highwayList);
 
                     seen.each(s -> {
                         Fx.explosion.at(s);
@@ -418,17 +407,8 @@ public class ConveyorGraph {
         });
     }
 
-    /**
-     * Return a vertex going from source to target, either modifying the toVertex from source, or creating a new one
-     * Does *not* return the highway vertex
-     * @param source
-     * @param target
-     * @return
-     */
-    public Vertex connect(ConveyorNode source, ConveyorNode target){
 
-        //Handle vertex connection first
-        Vertex returnVertex = addVertex(source, target);
+    public void connect(ConveyorNode source, ConveyorNode target){
 
         boolean sourceLonely = source.fromHighways.size == 0;
         boolean targetLonely = target.toHighway == null;
@@ -439,34 +419,39 @@ public class ConveyorGraph {
         //Set tmpDirection to the direction from the source to the target
         tmpDirection.set(target).sub(source).setLength(1);
 
+        //Link the two nodes
+        link(source, target);
+
         if(sourceLonely){
             if(targetLonely){
-                Log.info("Case 1: Lonely source, Lonely target");
+                Log.debug("Case 1: Lonely source, Lonely target");
                 //Case 1: Both nodes are lonely, create new highway
+
+
                 addHighway(source, target);
             }
             else{
-                Log.info("Case 2: Lonely source, Connected target");
+                Log.debug("Case 2: Lonely source, Connected target");
                 //Case 2: Lonely source, connected target.
                 //Extend target highway back to source if inline && target isn't already an intersection
                 if (target.fromHighways.size < 1 && tmpDirection.equals(targetHighway.direction)) {
-                    Log.info("inline!");
+                    Log.debug("inline!");
                     target.toHighway.appendStart(source);
                     source.toHighway = target.toHighway;
                     target.fromHighways.add(target.toHighway);
 
-                    return returnVertex;
+                    return;
                 }
 
                 //Otherwise, create a new highway
                 addHighway(source, target);
-                return returnVertex;
+                return;
             }
-            return returnVertex;
+            return;
         }
         else{
             if(targetLonely){
-                Log.info("Case 3: Connected source, Lonely target");
+                Log.debug("Case 3: Connected source, Lonely target");
                 //Case 3: Connected source, lonely target
 
                 //If source only has one input highway && that hihgway is inline with the target, then extend the source highway onto the target
@@ -478,15 +463,15 @@ public class ConveyorGraph {
                         //Set the source's new current output highway to the inline input highway
                         source.toHighway = sourceInputHighway;
                         target.fromHighways.add(sourceInputHighway);
-                        return returnVertex;
+                        return;
                     }
                 }
                 //Otherwise, create a new highway
                 addHighway(source, target);
-                return returnVertex;
+                return;
             }
             else{
-                Log.info("Case 4: Connected source, Connected target");
+                Log.debug("Case 4: Connected source, Connected target");
                 //Case 4: Both source and target have existing highways.
 
                 /*
@@ -497,7 +482,7 @@ public class ConveyorGraph {
                     Highway sourceInputHighway = source.fromHighways.get(0);
                     //Note: Since we have *both* highways, check if they're both inline instead of infering it from source & target positions
                     if(tmpDirection.equals(sourceInputHighway.direction) && tmpDirection.equals(target.toHighway.direction)){
-                        Log.info("Joining two inline highways| Source dir: @, Target dir: @", sourceInputHighway.direction, tmpDirection);
+                        Log.debug("Joining two inline highways| Source dir: @, Target dir: @", sourceInputHighway.direction, tmpDirection);
 
                         //Add the nodes from the target highway & add the source
                         sourceInputHighway.nodes.add(targetHighway.nodes);
@@ -514,12 +499,12 @@ public class ConveyorGraph {
                         //Remove the old highway
                         highways.remove(targetHighway);
 
-                        return returnVertex;
+                        return;
                     }
 
                     //If the direction of the source's input highway is inline with the direction from source to target, then extend the source's input
                     if(tmpDirection.equals(sourceInputHighway.direction)) {
-                        Log.info("Connecting source's output highway onto new highway's start");
+                        Log.debug("Connecting source's output highway onto new highway's start");
                         //Otherwise, merge existing highway onto target's output highway's start
 
                         //Set the source's output highway to its current input highway
@@ -527,11 +512,11 @@ public class ConveyorGraph {
 
                         source.toHighway.appendEnd(target);
                         target.fromHighways.add(source.toHighway);
-                        return returnVertex;
+                        return;
                     }
                     //If the direction of the target's output highway is inline with the direction from source to target, then extend the target's input
                     if(tmpDirection.equals(targetHighway.direction)) {
-                        Log.info("Connecting source's output highway onto new highway's start");
+                        Log.debug("Connecting source's output highway onto new highway's start");
                         //Otherwise, merge existing highway onto target's output highway's start
 
                         //Set the source's output highway to its current input highway
@@ -539,42 +524,21 @@ public class ConveyorGraph {
                         targetHighway.nodes.add(source);
 
                         target.toHighway.appendStart(source);
-                        return returnVertex;
+                        return;
                     }
                 }
 
-                Log.info("Creating a new highway");
+                Log.debug("Creating a new highway");
                 //Otherwise, merge existing highway onto target's output highway's start
                 addHighway(source, target);
-                return returnVertex;
+                return;
             }
         }
     }
 
-    //Unlinks all vertices connected to this node, splits highways
-    public void decouple(ConveyorNode node){
-        node.fromVertexes.each(vertex -> {
-            vertex.end = null;
-        });
-        node.toVertex.start = null;
-    }
-
-    public ConveyorNode addNode(float x, float y){
-        ConveyorNode node = new ConveyorNode(x, y);
-        nodes.add(node);
-        return node;
-    }
-
-    //Returns the vertex made (not the highway)
-    public Vertex addVertex(ConveyorNode start, ConveyorNode end){
-
-        Vertex vertex = new Vertex(start, end);
-
-        end.fromVertexes.add(vertex);
-        start.toVertex = vertex;
-
-        vertices.add(vertex);
-        return vertex;
+    public void link(ConveyorNode start, ConveyorNode end){
+        start.toNode = end;
+        end.fromNodes.add(start);
     }
 
     //Returns the highway made
@@ -617,9 +581,9 @@ public class ConveyorGraph {
 
         Highway nextHighway = highway.end.toHighway;
 
-        if(entry.next == entry) Log.info("THERES BEEN AN ISSUE ERE");
+        if(entry.next == entry) Log.debug("THERES BEEN AN ISSUE ERE");
         if(remainingDst > 0 && front && nextHighway != null){
-            Log.info("Theres distance left, seize the day!");
+            Log.debug("Theres distance left, seize the day!");
             boolean emptyTarget = nextHighway.entries.isEmpty();
 
             //Return if the next highway isn't empty & its backmost state doesn't leave enough room for the current entry
@@ -706,7 +670,6 @@ public class ConveyorGraph {
                 entry.x = x;
                 entry.y = y;
                 entry.update(x, y);
-                Log.info(entry.itemState.parrent);
             });
         });
     }
@@ -722,17 +685,17 @@ public class ConveyorGraph {
 
         if(debug){
             Lines.stroke(3);
-            vertices.each(v -> {
+            nodes.each(node -> {
                 Draw.z(drawLayer - 3);
                 Draw.color(Color.brown);
-                Lines.line(v.start.x, v.start.y, v.end.x, v.end.y);
+                Lines.line(node.x, node.y, node.toNode.x, node.toNode.y);
 
                 Draw.z(drawLayer - 2);
-                Draw.color(v.start.mark ? Color.yellow : Color.orange);
-                Fill.square(v.start.x, v.start.y, 3);
+                Draw.color(node.mark ? Color.yellow : Color.orange);
+                Fill.square(node.x, node.y, 3);
                 Draw.z(drawLayer - 1);
-                Draw.color(v.start.mark ? Color.magenta : Color.purple);
-                Fill.circle(v.end.x, v.end.y, 2);
+                Draw.color(node.mark ? Color.magenta : Color.purple);
+                Fill.circle(node.toNode.x, node.toNode.y, 2);
             });
         }
 
@@ -827,6 +790,7 @@ public class ConveyorGraph {
         }
 
         public void draw(float x, float y){
+            Draw.z(Layer.blockOver);
             itemState.draw();
             Drawf.text(stateString, x, y, Color.red);
             Drawf.text(belowString, x, y - 8, Color.yellow);
@@ -877,6 +841,11 @@ public class ConveyorGraph {
     public static class Highway implements ItemStateHolder {
 
         @Override
+        public Seq<ItemState> list() {
+            return null;
+        }
+
+        @Override
         public String toString() {
             return Strings.format("Highway| From: @, To: @", start, end);
         }
@@ -890,7 +859,7 @@ public class ConveyorGraph {
             //Empty highway, so both length & startGap are the same
             startGap = length = Mathf.dst(start.x, start.y, end.x, end.y);
 
-            Log.info("Highway created from (@, @) to (@, @) of length @",
+            Log.debug("Highway created from (@, @) to (@, @) of length @",
                     Strings.autoFixed(start.x/Vars.tilesize, 0),
                     Strings.autoFixed(start.y/Vars.tilesize, 0),
                     Strings.autoFixed(end.x/Vars.tilesize, 0),
@@ -903,7 +872,7 @@ public class ConveyorGraph {
             }
 
             direction.set(end).sub(start).setLength(1);
-            nodes.addAll(start);
+            nodes.addAll(start, end);
         }
 
         @Override
@@ -945,6 +914,12 @@ public class ConveyorGraph {
             state.parrent = null;
         }
 
+        //I did *not* want this
+        @Override
+        public Team team() {
+            return start.building.team;
+        }
+
         @Override
         public ItemState topState() {
             return entries.isEmpty() ? null : entries.firstOpt().itemState;
@@ -983,10 +958,11 @@ public class ConveyorGraph {
         //Merge this vertex onto the front of another vertex
         public void mergeOnto(Highway target){
             nodes.each(n -> {
-                n.toHighway = target;
+                n.fromHighways.add(target);
+                n.fromHighways.remove(this);
+                if(n != this.end) n.toHighway = target;
             });
             target.end.toHighway = target;
-            start.fromHighways.add(target);
 
             if(target.entries.size > 0){
                 ConveyorEntry targetFrontState = target.entries.get(0);
@@ -1012,7 +988,7 @@ public class ConveyorGraph {
             }
             //If the target is empty, add the startGap + the distance between the two together
             else {
-                Log.info("Sum of gaps| This: @, Gap: @, Total: @", startGap, start.dst(target.end), startGap + start.dst(target.end));
+                Log.debug("Sum of gaps| This: @, Gap: @, Total: @", startGap, start.dst(target.end), startGap + start.dst(target.end));
                 target.startGap += startGap + start.dst(target.end);
             }
 
@@ -1034,7 +1010,7 @@ public class ConveyorGraph {
         //Flag for if this highway is straight and extendable
         public boolean straight = true;
 
-        //All nodes ordered from start up to before end
+        //All nodes ordered from start to end
         public Seq<ConveyorNode> nodes = new Seq<>();
 
         public float length;
@@ -1072,44 +1048,6 @@ public class ConveyorGraph {
         }
     }
 
-
-    //Stores information about the individual connections between blocks
-    public static class Vertex {
-
-        @Override
-        public String toString() {
-            return Strings.format("Vertex| From: @, To: @", start, end);
-        }
-
-        public Vertex(ConveyorNode start, ConveyorNode end){
-            this.start = start;
-            this.end = end;
-
-            length = Mathf.dst(start.x, start.y, end.x, end.y);
-
-            Log.info("Vertex created from (@, @) to (@, @) of length @",
-                    Strings.autoFixed(start.x/Vars.tilesize, 0),
-                    Strings.autoFixed(start.y/Vars.tilesize, 0),
-                    Strings.autoFixed(end.x/Vars.tilesize, 0),
-                    Strings.autoFixed(end.y/Vars.tilesize, 0),
-                    length
-            );
-            if(length == 0){
-                int p = 0;
-                p = 1/p;
-            }
-
-            direction.set(end).sub(start).setLength(1);
-        }
-
-        public float length;
-
-        public Vec2 direction = new Vec2();
-
-        public ConveyorNode start;
-        public ConveyorNode end;
-    }
-
     public static class ConveyorNode implements Position {
 
         //Flag for when splitting graphs
@@ -1141,10 +1079,10 @@ public class ConveyorGraph {
         public boolean loop;
 
         //All the vertexes that input to this
-        public Seq<Vertex> fromVertexes = new Seq<Vertex>();
+        public Seq<ConveyorNode> fromNodes = new Seq<ConveyorNode>();
 
         //If the node doesn't output to anything, assume it is the root node
-        public Vertex toVertex;
+        public ConveyorNode toNode;
 
         //Highway vertex that this is a part of.
         public Highway toHighway;

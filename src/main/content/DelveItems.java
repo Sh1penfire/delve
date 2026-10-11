@@ -1,8 +1,10 @@
 package main.content;
 
 import arc.graphics.Color;
+import main.items.AttributeItem;
 import main.items.DelveItem;
 import main.items.SpoilageItem;
+import main.items.TurretItem;
 import main.meta.MeldStats;
 import main.type.ItemAttributes;
 import mindustry.Vars;
@@ -14,9 +16,19 @@ public class DelveItems {
 
     public static DelveItem bionorb;
 
+    public static TurretItem duonium;
+
     public static Item[] propulites;
 
+    public static AttributeItem crystallineStone, crystalisedIron, crystalisedCopper;
+
     public static void load(){
+
+        crystalisedIron = new AttributeItem("crystalline-iron", ItemAttributes.iron);
+        crystalisedCopper = new AttributeItem("crystalline-copper", ItemAttributes.copper);
+        crystallineStone = new AttributeItem("crystalline-stone", ItemAttributes.stone);
+
+
         stone = new DelveItem("rubble", Color.gray){{
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 1);
@@ -47,6 +59,7 @@ public class DelveItems {
                     .put(ItemAttributes.sekos, 1);
             altNamePrefix = "blue-dust";
             altNames = 9;
+            stackable = true;
         }};
 
         shadesteel = new DelveItem("shadesteel", Color.valueOf("9d755d")){{
@@ -60,6 +73,10 @@ public class DelveItems {
         bionorb = new SpoilageItem("bionorb"){{
             size = 8;
             defaultFreshness = 60;
+        }};
+
+        duonium = new TurretItem("duonium"){{
+            size = 8;
         }};
 
         Vars.content.items().each(i -> {

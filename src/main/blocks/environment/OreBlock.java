@@ -6,16 +6,16 @@ import arc.graphics.g2d.Draw;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Table;
 import arc.struct.Bits;
+import arc.struct.ObjectMap;
 import arc.util.Scaling;
 import arc.util.Strings;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
-import main.content.DelveItems;
 import main.content.blocks.DelveEnvBlocks;
 import main.items.ItemEntryIDMap;
-import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Blocks;
+import mindustry.content.Items;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
 import mindustry.graphics.Layer;
@@ -37,6 +37,8 @@ import java.util.Iterator;
 public class OreBlock extends Block {
 
     public static ModTile tmpTile = new ModTile(-1, -1);
+
+    public static ObjectMap<Block, Item> itemDropMap = new ObjectMap<>();
 
     public static class ModTile extends Tile{
 
@@ -94,7 +96,7 @@ public class OreBlock extends Block {
     //regular walls get converted to these when drill blasts hit them.
     public class OreBlockBuild extends Building{
         public ItemStack[] material;
-        public Block parent;
+        public Block parrent;
 
         @Override
         public boolean collide(Bullet other) {
@@ -104,14 +106,7 @@ public class OreBlock extends Block {
         @Override
         public void killed() {
             super.killed();
-            var pile = ItemStatePile.create(tile.x, tile.y, ItemEntryIDMap.getState(DelveItems.bionorb));
-        }
-
-        //Literally all of the shit below is visual until the read/write
-        @Override
-        public void draw() {
-            Draw.z(Layer.blockUnder);
-            parent.drawBase(tile);
+            var pile = ItemStatePile.create(tile.x, tile.y, ItemEntryIDMap.getState(itemDropMap.get(parrent, Items.sand)));
         }
 
         @Override
@@ -133,10 +128,10 @@ public class OreBlock extends Block {
             table.table((t) -> {
                 t.left();
 
-                tmpTile.setBlock(parent);
+                tmpTile.setBlock(parrent);
 
-                t.add(new Image(this.parent.getDisplayIcon(tmpTile))).scaling(Scaling.fit).size(32.0F);
-                t.labelWrap(this.parent.getDisplayName(tmpTile) + "[lightgray] (Ore)[]").left().width(190.0F).padLeft(5.0F);
+                t.add(new Image(this.parrent.getDisplayIcon(tmpTile))).scaling(Scaling.fit).size(32.0F);
+                t.labelWrap(this.parrent.getDisplayName(tmpTile) + "[lightgray] (Ore)[]").left().width(190.0F).padLeft(5.0F);
             }).growX().left();
             table.row();
 
@@ -232,20 +227,23 @@ public class OreBlock extends Block {
         @Override
         public void placed() {
             super.placed();
-            parent = Blocks.stone;
+            if(block == DelveEnvBlocks.oreBlock) {
+                parrent = Blocks.stone;
+            }
+            else parrent = block;
         }
 
         @Override
         public void write(Writes write) {
             super.write(write);
-            TypeIO.writeBlock(write, parent);
+            TypeIO.writeBlock(write, parrent);
         }
 
         @Override
         public void read(Reads read, byte revision) {
             super.read(read, revision);
-            parent = TypeIO.readBlock(read);
-            if(healthf() == 1) tile.setBlock(parent);
+            parrent = TypeIO.readBlock(read);
+            if(healthf() == 1 && parrent == null) tile.setBlock(parrent);
         }
     }
 }

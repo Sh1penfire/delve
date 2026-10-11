@@ -14,12 +14,12 @@ public class DelveGeometry {
 
                 int oy = y + direction.y * i + offset.y * j;
 
-                lambda.get(ox, oy);
+                if(lambda.get(ox, oy)) return;
             }
         }
     };
 
     public interface Pointf{
-        void get(int x, int y);
+        boolean get(int x, int y);
     }
 }

@@ -1,6 +1,7 @@
 package main.blocks.distrib;
 
 import arc.math.geom.Geometry;
+import arc.struct.Seq;
 import arc.util.Log;
 import main.blocks.environment.ItemStatePile;
 import main.blocks.interfaces.ItemStateHolder;
@@ -19,17 +20,16 @@ public class DelveConveyorBlock extends Block {
     public DelveConveyorBlock(String name) {
         super(name);
         update = true;
-        rotate = quickRotate = drawArrow = true;
+        quickRotate = false;
+        rotate = drawArrow = true;
     }
 
     public float speed = Vars.tilesize/60f;
 
     public class DelveConveyorBuild extends Building implements ItemStateHolder {
         public ConveyorGraph graph;
-        //The vetex that outputs from this building
-        public ConveyorGraph.Vertex vertex;
 
-        public ConveyorGraph.Vertex highway;
+        public ConveyorGraph.Highway highway;
 
         //Central node of the building
         public ConveyorGraph.ConveyorNode node;
@@ -37,6 +37,11 @@ public class DelveConveyorBlock extends Block {
         public DelveConveyorBuild frontConv;
 
         public int lastRot = 0;
+
+        @Override
+        public Seq<ItemState> list() {
+            return null;
+        }
 
         @Override
         public boolean acceptsItemState(ItemState state) {
@@ -92,27 +97,30 @@ public class DelveConveyorBlock extends Block {
 
         @Override
         public void onRemoved() {
-            //Disconnect this node and its target node
-            if(node.toVertex != null){
-                Log.info("Node & Node to vertex: @ & @", node, node.toVertex);
-                graph.disconnect(node, node.toVertex.end);
-            }
-            //Disconnect all the nodes connected to this
-            if(node.fromVertexes != null){
-                Log.info(node.fromVertexes);
-                ConveyorGraph.Vertex[] vOk = node.fromVertexes.toArray(ConveyorGraph.Vertex.class);
-
-                for(ConveyorGraph.Vertex v: vOk){
-                    graph.disconnect(v.start, v.end);
-                }
-            }
-            graph.nodes.remove(node);
-
+            disconnect();
             super.onRemoved();
         }
 
+        public void disconnect(){
+            //Disconnect this node and its target node
+            if(node.toNode != null){
+                Log.debug("Node & Node to vertex: @ & @", node, node.toNode);
+                graph.disconnect(node, node.toNode);
+            }
+            //Disconnect all the nodes connected to this
+            if(node.fromNodes != null){
+                Log.debug(node.fromNodes);
+                ConveyorGraph.ConveyorNode[] vOk = node.fromNodes.toArray(ConveyorGraph.ConveyorNode.class);
+
+                for(ConveyorGraph.ConveyorNode nodeInput: vOk){
+                    graph.disconnect(nodeInput, node);
+                }
+            }
+            graph.nodes.remove(node);
+        }
+
         public void updateGraph(){
-            Log.info("Updating graph on: @", tile);
+            Log.debug("Updating graph on: @", tile);
             DelveConveyorBuild front = null;
             if(front() instanceof DelveConveyorBuild graphed){
                 front = graphed;
@@ -149,6 +157,7 @@ public class DelveConveyorBlock extends Block {
             super.init(tile, team, shouldAdd, rotation);
             node = new ConveyorGraph.ConveyorNode(this.x, this.y, this);
             createGraph(node);
+            lastRot = rotation;
             return this;
         }
 
@@ -158,6 +167,7 @@ public class DelveConveyorBlock extends Block {
         public void onProximityUpdate() {
             if(lastRot != rotation){
                 lastRot = rotation;
+                Log.info("rotated");
             }
             super.onProximityUpdate();
             updateGraph();
