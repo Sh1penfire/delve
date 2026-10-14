@@ -12,13 +12,13 @@ import main.blocks.interfaces.ItemStateHolder;
 import main.content.DelveAspects;
 import main.content.DelveItems;
 import main.content.blocks.*;
-import main.content.DelveUnits;
 import main.content.modifiers.VanillaCostModifier;
 import main.content.units.DelvePlayerUnits;
+import main.data.Modifyable;
 import main.graphs.ConveyorGraph;
-import main.items.types.DelveItem;
 import main.type.ItemState;
 import mindustry.Vars;
+import mindustry.core.World;
 import mindustry.game.EventType;
 import mindustry.gen.Building;
 import mindustry.graphics.Drawf;
@@ -64,6 +64,10 @@ public class DelveMod extends Mod{
                 }
             }
             if(build instanceof ItemStateHolder holder){
+                if(holder.inventory() == null){
+                    return;
+                }
+
                 Seq<ItemState> list = holder.inventory().states;
                 if(list != null) list.each(state -> {
                     if(state.attributes != null) state.attributes.map.each((entry) -> {
@@ -75,7 +79,6 @@ public class DelveMod extends Mod{
             }
         });
 
-        DelveUnits.load();
         DelvePlayerUnits.load();
         DelveAspects.load();
         DelveItems.load();
@@ -90,6 +93,22 @@ public class DelveMod extends Mod{
 
         Log.info("FUCK YOU EGGMAN IM GOING TO COUNTER-PISS ON THE MOOOOOOOOOOON");
         //I touched intelij today :D
+    }
+
+    public static void modify1(){
+        Modifyable.Modifier<World, Float> sizeModifier = new Modifyable.Modifier<World, Float>() {
+            @Override
+            public int priority() {
+                return 0;
+            }
+
+            @Override
+            public Float apply(Float in, World context) {
+                return in * 2;
+            }
+        };
+        DelveItems.malachite.entry.size.addModifier(sizeModifier);
+
     }
 
     @Override

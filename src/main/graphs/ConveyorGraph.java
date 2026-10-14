@@ -757,7 +757,7 @@ public class ConveyorGraph {
 
         public ConveyorEntry(ItemState itemState){
             this.itemState = itemState;
-            this.size = itemState.size.getBase();
+            this.size = itemState.size.getModified(itemState.inventory);
         }
         public ConveyorEntry(ItemState itemState, float size){
             this.itemState = itemState;

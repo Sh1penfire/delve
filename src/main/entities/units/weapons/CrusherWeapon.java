@@ -4,6 +4,7 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Fill;
 import arc.math.Angles;
+import arc.math.Mathf;
 import arc.math.geom.Geometry;
 import arc.util.Tmp;
 import main.blocks.environment.ItemPile;
@@ -35,12 +36,12 @@ public class CrusherWeapon extends Weapon {
         float
                 mountX = unit.x + Angles.trnsx(unit.rotation - 90, x, y),
                 mountY = unit.y + Angles.trnsy(unit.rotation - 90, x, y);
+        bullet.shootEffect.at(mountX, mountY);
 
         if(mount.shoot){
-
             Tmp.v1.trns(unit.rotation, length).add(mountX, mountY);
             World.raycastEachWorld(mountX, mountY, Tmp.v1.x, Tmp.v1.y, (tx, ty) -> {
-                Fx.fire.at(tx * tilesize, ty * tilesize);
+                if(Mathf.chance(bullet.trailChance))bullet.hitEffect.at(tx * tilesize, ty * tilesize);
 
                 Tile t = Vars.world.tile(tx, ty);
 
@@ -73,8 +74,6 @@ public class CrusherWeapon extends Weapon {
 
                 return true;
             });
-
-
         }
     }
 

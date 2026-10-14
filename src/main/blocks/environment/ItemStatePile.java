@@ -34,6 +34,7 @@ import mindustry.world.meta.StatUnit;
 import mindustry.world.modules.ItemModule;
 
 import java.util.Iterator;
+import java.util.Random;
 
 public class ItemStatePile extends Block{
 
@@ -135,11 +136,13 @@ public class ItemStatePile extends Block{
         }
 
         int stackOffset;
+
+        static Random random = new Random();
         @Override
         public void draw() {
             Draw.z(Layer.blockUnder);
 
-            Mathf.rand.setSeed(id);
+            random.setSeed(id);
             stackOffset = 0;
 
             inventory.each(state -> {

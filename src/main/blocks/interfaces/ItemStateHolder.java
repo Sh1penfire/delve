@@ -13,7 +13,7 @@ public interface ItemStateHolder {
     Inventory inventory();
 
     default ItemState topState(){
-        return inventory().isEmpty() ? null : inventory().peek();
+        return inventory().peek();
     }
 
     //Whether this entity can accept this item state

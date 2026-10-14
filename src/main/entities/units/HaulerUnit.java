@@ -37,7 +37,7 @@ public class HaulerUnit extends TankUnit implements ItemStateHolder {
 
     @Override
     public boolean acceptsItemState(ItemState state) {
-        return state.size.getModified(inventory) + capacity < itemCapacity();
+        return state.size.getModified(inventory) <= inventory.roomFor(state);
     }
 
     float totalOffset = 0;

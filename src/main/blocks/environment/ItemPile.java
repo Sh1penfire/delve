@@ -30,6 +30,7 @@ import mindustry.world.meta.StatUnit;
 import mindustry.world.modules.ItemModule;
 
 import java.util.Iterator;
+import java.util.Random;
 
 public class ItemPile extends Block {
 
@@ -120,13 +121,13 @@ public class ItemPile extends Block {
             return amount;
         }
 
-
+        static Random random = new Random();
         int stackOffset;
         @Override
         public void draw() {
             Draw.z(Layer.blockUnder);
 
-            Mathf.rand.setSeed(id);
+            random.setSeed(id);
             stackOffset = 0;
 
             items.each((item, amount) -> {

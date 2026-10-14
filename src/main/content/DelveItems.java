@@ -29,7 +29,6 @@ public class DelveItems {
         crystalisedCopper = new AttributeItem("crystalline-copper", ItemAttributes.copper);
         crystallineStone = new AttributeItem("crystalline-stone", ItemAttributes.stone);
 
-
         stone = new DelveItem("rubble", Color.gray){{
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 5);
@@ -84,6 +83,7 @@ public class DelveItems {
         Vars.content.items().each(i -> {
             if(ItemAttributes.get(i) != null) MeldStats.itemAttributes(i, i.stats);
         });
+
     }
 
     //Not sure if ill be using this but just to get it in for the day

@@ -51,14 +51,17 @@ public class DelvePlayerUnits {
                 shootY = 4.5f;
                 recoil = 1f;
                 rotate = true;
-                rotateSpeed = 2.2f;
+                rotateSpeed = 8;
                 mirror = true;
                 x = 4;
                 y = 8;
                 heatColor = Color.valueOf("f9350f");
                 cooldownTime = 30f;
 
-                bullet = new BasicBulletType(4f, 40){{
+                continuous = alwaysContinuous = true;
+                alternate = false;
+
+                bullet = new BasicBulletType(4f, 10){{
                     sprite = "missile-large";
                     smokeEffect = Fx.shootBigSmoke;
                     shootEffect = Fx.shootBigColor;
@@ -68,9 +71,11 @@ public class DelvePlayerUnits {
                     hitSize = 4f;
                     hitColor = backColor = trailColor = Color.valueOf("feb380");
                     frontColor = Color.white;
-                    trailWidth = 1.7f;
-                    trailLength = 5;
-                    despawnEffect = hitEffect = Fx.hitBulletColor;
+
+                    trailChance = 0;
+                    shootEffect = Fx.generatespark;
+                    despawnEffect = hitEffect = Fx.hitBulletSmall;
+                    recoil = -0.25f;
                 }};
             }});
         }};

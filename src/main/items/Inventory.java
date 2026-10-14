@@ -6,6 +6,7 @@ import arc.util.Eachable;
 import arc.util.Nullable;
 import main.type.ItemState;
 import mindustry.core.World;
+import mindustry.world.Block;
 
 
 public class Inventory {
@@ -60,18 +61,19 @@ public class Inventory {
     public float roomFor(ItemState state){
         if(capacity == -1) return state.size.getModified(this) + 1;
 
-        //Case 1: enough room entirely
-        if(size + state.size.getModified(this) < capacity) return capacity - state.size.getModified(this);
-        else return 0;
+        return capacity - size;
     }
 
     public void add(ItemState state){
-        float startingWeight = topState.mass.getModified(this);
-        boolean shouldRemove = topState != null && topState.combine(state);
-        if(shouldRemove){
-            weight += startingWeight - topState.mass.getModified(this);
-            return;
+        if(topState != null){
+            float startingWeight = topState.mass.getModified(this);
+            boolean shouldRemove = topState != null && topState.combine(state);
+            if(shouldRemove){
+                weight += startingWeight - topState.mass.getModified(this);
+                return;
+            }
         }
+
         states.add(state);
         weight += state.mass.getModified(this);
         size += state.size.getModified(this);

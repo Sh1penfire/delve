@@ -44,8 +44,9 @@ public class ItemConstructors {
     }
 
     //Put an id to an entry
-    public static void put(String id, ConstructorEntry entry){
+    public static ConstructorEntry put(String id, ConstructorEntry entry){
         idMap.put(id, entry);
+        return entry;
     }
 
     //Get all entries to reset their current state
@@ -55,15 +56,20 @@ public class ItemConstructors {
         });
     }
 
-    public abstract static class BaseEntry{
-        //Used to reset the current state. Can be switched out for other constructors because that's just a thing you can do.
-        public WorldModifyable<Prov<ItemState>> constructor;
+    public abstract static class BaseEntry<T extends ItemState>{
+
+        //Used to reset the current state.
+        public WorldModifyable<Prov<T>> constructor;
 
         public abstract ItemState get(World context);
 
+        @Override
+        public String toString() {
+            return "Constructor: " + constructor;
+        }
     }
 
-    public static class VanillaEntry extends BaseEntry{
+    public static class VanillaEntry extends BaseEntry<ItemState>{
         public VanillaEntry(Item item){
             constructor = new WorldModifyable<>(() -> new ItemState(item, DelveItem.defaultSize));
         }
@@ -74,13 +80,17 @@ public class ItemConstructors {
         }
     }
 
-    public static class ConstructorEntry extends BaseEntry {
+    public static class ConstructorEntry extends BaseEntry<DelveItem.UpdateItemState> {
 
-        public ConstructorEntry(Prov<DelveItem.UpdateItemState> prov){
+        public ConstructorEntry(DelveItem parrent, Prov<DelveItem.UpdateItemState> prov){
             constructor = new WorldModifyable<>(prov);
+            type = new WorldModifyable<>(parrent);
+            size = new WorldModifyable<>(parrent.size);
+            mass = new WorldModifyable<>(parrent.mass);
+            volume = new WorldModifyable<>(parrent.volume);
+            data = new WorldModifyable<>(null);
+            attributes = new WorldModifyable<>(ItemAttributes.get(parrent));
         }
-
-        public WorldModifyable<Prov<DelveItem.UpdateItemState>> constructor;
 
         public WorldModifyable<DelveItem> type;
 
@@ -95,6 +105,8 @@ public class ItemConstructors {
         @Override
         public DelveItem.UpdateItemState get(World context) {
             DelveItem.UpdateItemState state = constructor.getModified(context).get();
+            Log.info(type);
+
             state.type.setBase(type.getModified(context));
             state.size.setBase(size.getModified(context));
             state.mass.setBase(mass.getModified(context));
