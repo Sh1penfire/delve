@@ -35,6 +35,7 @@ public class TurretItem extends DelveItem {
     }
     public TurretItem(String name) {
         this(name, Color.white);
+        constructor = () -> new TurretItemState(this, size);
     }
 
     @Override

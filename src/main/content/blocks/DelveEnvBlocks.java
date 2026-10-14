@@ -7,7 +7,7 @@ import main.blocks.environment.OreBlock;
 import main.content.DelveItems;
 
 public class DelveEnvBlocks {
-    public static OreBlock oreBlock;
+    public static DefaultOreBlock oreBlock;
     public static ItemPile itemPile;
     public static ItemStatePile statePile;
 

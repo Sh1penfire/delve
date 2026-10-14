@@ -10,13 +10,13 @@ import arc.struct.ObjectFloatMap;
 import arc.util.Nullable;
 import main.items.ItemConstructors;
 import main.meta.MeldStats;
-import main.type.ItemAttributes;
-import main.type.ItemState;
+import main.items.ItemAttributes;
+import main.items.ItemState;
 import mindustry.game.EventType;
 import mindustry.graphics.Layer;
 import mindustry.type.Item;
 
-public class DelveItem extends Item {
+public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item {
 
     public DelveItem(String name) {
         this(name, new Color(Color.black));
@@ -26,6 +26,8 @@ public class DelveItem extends Item {
         super(name, color);
     }
 
+    public Runnable postInitRunnable;
+
     public static float defaultSize = 4;
 
     public int altNames = 0;
@@ -33,11 +35,16 @@ public class DelveItem extends Item {
     @Nullable public String altNamePrefix;
     public String[] namesList;
 
-    public int size = 4;
+    public float size = 4;
+    public float mass = 1;
+    public float volume = 1;
 
-    public boolean stackable, runsOut;
+    //Whether or not the item can combine, or it comes in discrete packets that can't combine
+    public boolean discrete = true;
 
     public Prov<UpdateItemState> constructor = () -> new UpdateItemState(this, size);
+
+    public T entry;
 
     public void update(ItemState state, float x, float y){
 
@@ -88,7 +95,7 @@ public class DelveItem extends Item {
     public void init() {
         super.init();
 
-        ItemConstructors.put(name, new ItemConstructors.ConstructorEntry(constructor));
+        entry = (T) ItemConstructors.put(name, new ItemConstructors.ConstructorEntry(this, constructor));
 
         if(altNames > 0){
             namesList = new String[altNames];
@@ -101,5 +108,11 @@ public class DelveItem extends Item {
                 }
             });
         }
+    }
+
+    @Override
+    public void postInit() {
+        super.postInit();
+        if(postInitRunnable != null) postInitRunnable.run();
     }
 }

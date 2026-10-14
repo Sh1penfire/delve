@@ -4,6 +4,7 @@ import arc.graphics.g2d.Draw;
 import arc.math.geom.Geometry;
 import arc.struct.IntMap;
 import arc.util.Time;
+import arc.util.io.Reads;
 import main.blocks.EnergyField;
 import main.graphics.TileDrawers;
 import mindustry.Vars;
@@ -58,7 +59,13 @@ public class EnergyFieldNode extends PowerNode {
 
         @Override
         public Building init(Tile tile, Team team, boolean shouldAdd, int rotation) {
-            Geometry.circle(tile.x, tile.y, fieldRange, (tx, ty) -> {
+            setupField(tile);
+
+            return super.init(tile, team, shouldAdd, rotation);
+        }
+
+        public void setupField(Tile center){
+            Geometry.circle(center.x, center.y, fieldRange, (tx, ty) -> {
                 Tile curTile = Vars.world.tile(tx, ty);
                 if(curTile == null) return;
 
@@ -66,8 +73,6 @@ public class EnergyFieldNode extends PowerNode {
                 if(value == 0) EnergyField.total++;
                 EnergyField.coverage[curTile.x][curTile.y] = value + 1;
             });
-
-            return super.init(tile, team, shouldAdd, rotation);
         }
 
         @Override
@@ -107,6 +112,13 @@ public class EnergyFieldNode extends PowerNode {
                     TileDrawers.drawField(tx * Vars.tilesize, ty * Vars.tilesize, Vars.tilesize/2f);
                 }
             }
+        }
+
+        @Override
+        public void read(Reads read, byte revision) {
+            super.read(read, revision);
+
+            setupField(tile);
         }
     }
 }

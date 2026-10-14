@@ -3,12 +3,12 @@ package main.blocks.environment;
 import arc.Graphics;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
-import arc.math.Mathf;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
 import arc.struct.Bits;
 import arc.struct.Seq;
+import arc.util.Log;
 import arc.util.Scaling;
 import arc.util.Strings;
 import arc.util.io.Reads;
@@ -17,7 +17,7 @@ import main.blocks.interfaces.ItemStateHolder;
 import main.content.blocks.DelveEnvBlocks;
 import main.io.ModdedTypeIO;
 import main.items.Inventory;
-import main.type.ItemState;
+import main.items.ItemState;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Fx;
@@ -34,6 +34,7 @@ import mindustry.world.meta.StatUnit;
 import mindustry.world.modules.ItemModule;
 
 import java.util.Iterator;
+import java.util.Random;
 
 public class ItemStatePile extends Block{
 
@@ -107,11 +108,11 @@ public class ItemStatePile extends Block{
         }
 
         @Override
-        public void handleState(ItemState state) {
-            inventory.add(state);
-            state.parrent = this;
+        public void addState(ItemState state) {
+            ItemStateHolder.super.addState(state);
             state.x = x;
             state.y = y;
+            Log.info("Adding state!");
         }
 
         @Override
@@ -135,11 +136,13 @@ public class ItemStatePile extends Block{
         }
 
         int stackOffset;
+
+        static Random random = new Random();
         @Override
         public void draw() {
             Draw.z(Layer.blockUnder);
 
-            Mathf.rand.setSeed(id);
+            random.setSeed(id);
             stackOffset = 0;
 
             inventory.each(state -> {

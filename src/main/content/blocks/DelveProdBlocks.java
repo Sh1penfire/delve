@@ -1,12 +1,7 @@
 package main.content.blocks;
 
-import main.blocks.Beamer;
-import main.blocks.Vacuum;
 import main.blocks.WallBlaster;
-import main.blocks.crafters.RandomDumperBlock;
 import main.blocks.crafters.RecipeCrafter;
-import main.blocks.distrib.DelveConveyorBlock;
-import main.content.DelveAspects;
 import main.content.DelveItems;
 import mindustry.type.Category;
 import mindustry.type.ItemStack;

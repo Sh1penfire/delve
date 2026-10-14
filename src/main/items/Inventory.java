@@ -2,9 +2,8 @@ package main.items;
 
 import arc.func.Cons;
 import arc.struct.Seq;
-import arc.util.Eachable;
+import arc.util.Log;
 import arc.util.Nullable;
-import main.type.ItemState;
 import mindustry.core.World;
 
 
@@ -35,6 +34,10 @@ public class Inventory {
         return world != null;
     }
 
+    public float fullness(){
+        return size/capacity;
+    }
+
     public ItemState peek(){
         if(states.isEmpty()) return null;
         return states.peek();
@@ -58,30 +61,41 @@ public class Inventory {
 
     //How much room there is to accept items with
     public float roomFor(ItemState state){
-        if(capacity == -1) return state.size.getModified(this) + 1;
+        if(capacity == -1) return state.volume.getModified(this) + 1;
 
-        //Case 1: enough room entirely
-        if(size + state.size.getModified(this) < capacity) return capacity - state.size.getModified(this);
-        else return 0;
+        return capacity - size;
     }
 
     public void add(ItemState state){
-        float startingWeight = topState.mass.getModified(this);
-        boolean shouldRemove = topState != null && topState.combine(state);
-        if(shouldRemove){
-            weight += startingWeight - topState.mass.getModified(this);
-            return;
+        if(topState != null && topState.canCombine(state)){
+            float currentVolume = topState.volume.getModified(this);
+            float currentWeight = topState.mass.getModified(this);
+            boolean shouldCombine = topState.combine(state);
+
+            //Add the change in size & weight
+            Log.info("Before combining: @,\nAfter combining: @", currentVolume, topState.volume.getModified(this));
+            size += topState.volume.getModified(this) - currentVolume;
+            weight += topState.mass.getModified(this) - currentWeight;
+
+            if(shouldCombine) {
+                return;
+            }
         }
+
+        //Set this as the new top state if it hasn't been combined onto the current top state
+        topState = state;
+
         states.add(state);
         weight += state.mass.getModified(this);
-        size += state.size.getModified(this);
+        size += state.volume.getModified(this);
         state.inventory = this;
     }
 
     public void remove(ItemState state){
         weight -= state.mass.getModified(this);
-        size -= state.size.getModified(this);
+        size -= state.volume.getModified(this);
         states.remove(state);
         state.inventory = null;
+        topState = peek();
     }
 }

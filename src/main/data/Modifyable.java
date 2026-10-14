@@ -1,31 +1,34 @@
 package main.data;
 
 import arc.struct.Seq;
+import arc.util.Log;
 
 public class Modifyable<C, T> {
-    private T value;
+    private T base;
 
     public Seq<Modifier<C, T>> modifiers = new Seq<>();
 
     public Modifyable(T t){
-        value = t;
+        base = t;
     }
 
-    T current;
+    T current, modified;
     public T getModified(C context){
-        current = value;
+        current = base;
         modifiers.forEach(m -> {
-            current = m.apply(current, context);
+            modified = m.apply(current, context);
+
+            current = modified;
         });
-        return value;
+        return current;
     }
 
     public void setBase(T t){
-        value = t;
+        base = t;
     }
 
     public T getBase(){
-        return value;
+        return base;
     }
 
     public void reset(){

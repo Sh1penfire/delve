@@ -8,27 +8,19 @@ import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import arc.math.geom.Vec2;
 import arc.struct.IntMap;
-import arc.struct.IntSeq;
 import arc.struct.Seq;
-import arc.util.Log;
 import arc.util.Nullable;
-import arc.util.Time;
 import arc.util.Tmp;
 import main.DelveGeometry;
 import main.blocks.environment.ItemStatePile;
-import main.blocks.environment.OreBlock;
 import main.blocks.interfaces.ItemStateHolder;
 import main.graphics.TileDrawers;
 import main.items.Inventory;
-import main.type.ItemState;
+import main.items.ItemState;
 import mindustry.Vars;
-import mindustry.game.FogControl;
-import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.world.Block;
 import mindustry.world.Tile;
-import mindustry.world.blocks.defense.Wall;
-import mindustry.world.blocks.production.AttributeCrafter;
 
 public class DelveGrabberBlock extends Block {
 
@@ -104,13 +96,6 @@ public class DelveGrabberBlock extends Block {
         public void removeState(ItemState state) {
             inventory.remove(state);
             state.parrent = null;
-        }
-
-        @Override
-        public void handleState(ItemState state) {
-            ItemStateHolder.super.handleState(state);
-            inventory.add(state);
-            state.parrent = this;
         }
 
         public class Hand{

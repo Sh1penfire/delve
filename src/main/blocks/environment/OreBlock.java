@@ -8,17 +8,13 @@ import arc.struct.Bits;
 import arc.struct.ObjectMap;
 import arc.util.Scaling;
 import arc.util.Strings;
-import arc.util.io.Reads;
-import arc.util.io.Writes;
 import main.content.DelveItems;
-import main.content.blocks.DelveEnvBlocks;
 import main.items.ItemConstructors;
+import main.items.ItemState;
 import mindustry.Vars;
-import mindustry.content.Blocks;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
 import mindustry.graphics.Pal;
-import mindustry.io.TypeIO;
 import mindustry.type.Category;
 import mindustry.type.Item;
 import mindustry.type.ItemStack;
@@ -57,12 +53,18 @@ public class OreBlock extends Block {
         targetable = false;
         solid = true;
         rebuildable = false;
+        forceDark = true;
 
         buildVisibility = BuildVisibility.sandboxOnly;
         category = Category.effect;
 
 
         allowDerelictRepair = false;
+    }
+
+    @Override
+    public boolean isDarkened(Tile tile) {
+        return super.isDarkened(tile);
     }
 
     @Override
@@ -92,9 +94,12 @@ public class OreBlock extends Block {
     }
 
     //regular walls get converted to these when drill blasts hit them.
-    public class OreBlockBuild extends Building{
+    public class OreBlockBuild extends Building implements BreakableWallBuilding{
         public ItemStack[] material;
-        public Block parrent;
+
+        public Block parent(){
+            return block;
+        }
 
         @Override
         public boolean collide(Bullet other) {
@@ -104,7 +109,10 @@ public class OreBlock extends Block {
         @Override
         public void killed() {
             super.killed();
-            var pile = ItemStatePile.create(tile.x, tile.y, ItemConstructors.getEntry(itemDropMap.get(parrent, DelveItems.stone).name).get(Vars.world));
+            ItemState state = ItemConstructors.get(itemDropMap.get(parent(), DelveItems.stone).name);
+            state.mass.setBase(5f);
+
+            var pile = ItemStatePile.create(tile.x, tile.y, state);
         }
 
         @Override
@@ -126,10 +134,10 @@ public class OreBlock extends Block {
             table.table((t) -> {
                 t.left();
 
-                tmpTile.setBlock(parrent);
+                tmpTile.setBlock(parent());
 
-                t.add(new Image(this.parrent.getDisplayIcon(tmpTile))).scaling(Scaling.fit).size(32.0F);
-                t.labelWrap(this.parrent.getDisplayName(tmpTile) + "[lightgray] (Ore)[]").left().width(190.0F).padLeft(5.0F);
+                t.add(new Image(this.parent().getDisplayIcon(tmpTile))).scaling(Scaling.fit).size(32.0F);
+                t.labelWrap(this.parent().getDisplayName(tmpTile) + "[lightgray] (Ore)[]").left().width(190.0F).padLeft(5.0F);
             }).growX().left();
             table.row();
 
@@ -220,28 +228,6 @@ public class OreBlock extends Block {
                 }
                 table.marginBottom(-5.0F);
             }
-        }
-
-        @Override
-        public void placed() {
-            super.placed();
-            if(block == DelveEnvBlocks.oreBlock) {
-                parrent = Blocks.stone;
-            }
-            else parrent = block;
-        }
-
-        @Override
-        public void write(Writes write) {
-            super.write(write);
-            TypeIO.writeBlock(write, parrent);
-        }
-
-        @Override
-        public void read(Reads read, byte revision) {
-            super.read(read, revision);
-            parrent = TypeIO.readBlock(read);
-            if(healthf() == 1 && parrent == null) tile.setBlock(parrent);
         }
     }
 }

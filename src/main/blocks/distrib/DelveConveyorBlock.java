@@ -8,7 +8,7 @@ import main.graphs.ConveyorGraph;
 import main.items.Inventory;
 import main.items.types.DelveItem;
 import main.items.ItemConstructors;
-import main.type.ItemState;
+import main.items.ItemState;
 import mindustry.Vars;
 import mindustry.game.Team;
 import mindustry.gen.Building;
@@ -45,12 +45,13 @@ public class DelveConveyorBlock extends Block {
 
         @Override
         public boolean acceptsItemState(ItemState state) {
-            return node.toHighway != null && state != null && state.size.getBase() <= node.toHighway.startGap;
+            return node.toHighway != null && state != null && state.size.getModified(state.inventory) <= node.toHighway.startGap;
         }
 
         @Override
-        public void handleState(ItemState state) {
+        public boolean handleState(ItemState state) {
             graph.handleEntry(node.toHighway, new ConveyorGraph.ConveyorEntry(state));
+            return true;
         }
 
         /*
@@ -144,7 +145,7 @@ public class DelveConveyorBlock extends Block {
 
         @Override
         public boolean acceptItem(Building source, Item item) {
-            return node.toHighway != null && (item instanceof DelveItem delvie ? delvie.size : DelveItem.defaultSize) <= node.toHighway.startGap;
+            return node.toHighway != null && (item instanceof DelveItem delvie ? delvie.entry.size.getModified(Vars.world) : DelveItem.defaultSize) <= node.toHighway.startGap;
         }
 
         @Override

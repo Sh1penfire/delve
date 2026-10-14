@@ -5,10 +5,12 @@ import arc.math.geom.Rect;
 import main.entities.units.HaulerUnit;
 import main.entities.units.weapons.CrusherWeapon;
 import mindustry.content.Fx;
+import mindustry.content.StatusEffects;
 import mindustry.content.UnitTypes;
 import mindustry.entities.bullet.BasicBulletType;
 import mindustry.gen.Sounds;
 import mindustry.graphics.Pal;
+import mindustry.type.StatusEffect;
 import mindustry.type.UnitType;
 import mindustry.type.Weapon;
 
@@ -20,7 +22,9 @@ public class DelvePlayerUnits {
         hauler = new UnitType("hauler"){{
             constructor = HaulerUnit::new;
             rotateToBuilding = false;
-            omniMovement = false;
+            omniMovement = true;
+            rotateSpeed = 5.5f;
+            drag = 0.3f;
 
             mineSpeed = 0;
             buildSpeed = 1;
@@ -29,10 +33,9 @@ public class DelvePlayerUnits {
             lightColor = Pal.accent;
             lightOpacity = 0.45f;
 
-            hitSize = 12f;
+            hitSize = 20;
             treadPullOffset = 3;
             speed = 1.25f;
-            rotateSpeed = 7.5f;
             health = 850;
             armor = 6f;
             itemCapacity = 50;
@@ -44,21 +47,32 @@ public class DelvePlayerUnits {
             tankMoveSound = Sounds.tankMoveSmall;
 
             weapons.add(new CrusherWeapon(){{
+                shootStatus = new StatusEffect("grinding"){{
+                    speedMultiplier = 0.15f;
+                    dragMultiplier = 0.08f;
+                }};
+                shootStatusDuration = 15;
 
                 shootSound = Sounds.shootStell;
                 layerOffset = 0.0001f;
-                reload = 50f;
                 shootY = 4.5f;
                 recoil = 1f;
                 rotate = true;
                 rotateSpeed = 2.2f;
+                rotationLimit = 15;
                 mirror = true;
                 x = 4;
                 y = 8;
                 heatColor = Color.valueOf("f9350f");
                 cooldownTime = 30f;
 
-                bullet = new BasicBulletType(4f, 40){{
+                continuous = alwaysContinuous = true;
+                alternate = false;
+
+                weaponLoopSound = Sounds.tankMoveHeavy;
+
+
+                bullet = new BasicBulletType(4f, 40/60f){{
                     sprite = "missile-large";
                     smokeEffect = Fx.shootBigSmoke;
                     shootEffect = Fx.shootBigColor;
@@ -68,9 +82,11 @@ public class DelvePlayerUnits {
                     hitSize = 4f;
                     hitColor = backColor = trailColor = Color.valueOf("feb380");
                     frontColor = Color.white;
-                    trailWidth = 1.7f;
-                    trailLength = 5;
-                    despawnEffect = hitEffect = Fx.hitBulletColor;
+
+                    trailChance = 0;
+                    shootEffect = Fx.generatespark;
+                    despawnEffect = hitEffect = Fx.hitBulletSmall;
+                    recoil = -0.055f;
                 }};
             }});
         }};

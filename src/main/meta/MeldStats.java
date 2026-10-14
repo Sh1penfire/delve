@@ -1,11 +1,9 @@
 package main.meta;
 
 import arc.Core;
-import arc.util.Strings;
 import main.fluid.AspectGroup;
-import main.type.ItemAttributes;
+import main.items.ItemAttributes;
 import mindustry.Vars;
-import mindustry.gen.Tex;
 import mindustry.type.Item;
 import mindustry.type.Liquid;
 import mindustry.ui.Styles;
