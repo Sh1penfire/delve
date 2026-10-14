@@ -1,4 +1,4 @@
-package main.items;
+package main.items.types;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -10,9 +10,8 @@ import arc.util.Time;
 import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.graphics.Layer;
-import mindustry.type.Item;
 
-public class SpoilageItem extends DelveItem{
+public class SpoilageItem extends DelveItem {
     public SpoilageItem(String name, Color color) {
         super(name, color);
     }

@@ -16,6 +16,7 @@ import arc.util.io.Writes;
 import main.blocks.interfaces.ItemStateHolder;
 import main.content.blocks.DelveEnvBlocks;
 import main.io.ModdedTypeIO;
+import main.items.Inventory;
 import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Blocks;
@@ -52,7 +53,6 @@ public class ItemStatePile extends Block{
         update = true;
         breakable = false;
         targetable = false;
-        solid = true;
         rebuildable = false;
         solid = false;
 
@@ -93,22 +93,22 @@ public class ItemStatePile extends Block{
     //Physical item states in the world
     public class ItemStatePileBuild extends Building implements ItemStateHolder {
 
-        public Seq<ItemState> states = new Seq<>();
+        public Inventory inventory = new Inventory(-1);
 
         @Override
-        public Seq<ItemState> list() {
-            return states;
+        public Inventory inventory() {
+            return inventory;
         }
 
         @Override
         public void update() {
             super.update();
-            states.each(ItemState::update);
+            inventory.each(ItemState::update);
         }
 
         @Override
         public void handleState(ItemState state) {
-            states.add(state);
+            inventory.add(state);
             state.parrent = this;
             state.x = x;
             state.y = y;
@@ -116,9 +116,9 @@ public class ItemStatePile extends Block{
 
         @Override
         public void removeState(ItemState state) {
-            states.remove(state);
+            inventory.remove(state);
             state.parrent = null;
-            if(states.isEmpty()) {
+            if(inventory.isEmpty()) {
                 //Remove this building without triggering that damm char effect that I hate
                 tile.setBlock(Blocks.air);
             }
@@ -126,7 +126,7 @@ public class ItemStatePile extends Block{
 
         @Override
         public ItemState topState() {
-            return states.size == 0 ? null : states.peek();
+            return inventory.peek();
         }
 
         @Override
@@ -142,7 +142,7 @@ public class ItemStatePile extends Block{
             Mathf.rand.setSeed(id);
             stackOffset = 0;
 
-            states.each(state -> {
+            inventory.each(state -> {
                 stackOffset++;
                 state.draw();
             });
@@ -176,9 +176,9 @@ public class ItemStatePile extends Block{
                 Seq<Image> images = Seq.with();
                 i = 0;
 
-                states.each(item -> {
+                inventory.each(item -> {
                     i++;
-                    Image image = new Image(item.type.uiIcon);
+                    Image image = new Image(item.type.getModified(inventory).uiIcon);
                     image.rotateBy(imageoffset);
                     images.add(image);
 
@@ -289,8 +289,8 @@ public class ItemStatePile extends Block{
         @Override
         public void read(Reads read, byte revision) {
             super.read(read, revision);
-            states = ModdedTypeIO.readStates(read);
-            states.each(s -> {
+            inventory = ModdedTypeIO.readInventory(read);
+            inventory.each(s -> {
                 s.parrent = this;
             });
         }
@@ -298,7 +298,7 @@ public class ItemStatePile extends Block{
         @Override
         public void write(Writes write) {
             super.write(write);
-            ModdedTypeIO.writeStates(write, states);
+            ModdedTypeIO.writeInventory(write, inventory);
         }
     }
 }

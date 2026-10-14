@@ -1,18 +1,19 @@
 package main.content;
 
 import arc.graphics.Color;
-import main.items.AttributeItem;
-import main.items.DelveItem;
-import main.items.SpoilageItem;
-import main.items.TurretItem;
+import main.items.types.AttributeItem;
+import main.items.types.DelveItem;
+import main.items.types.SpoilageItem;
+import main.items.types.TurretItem;
 import main.meta.MeldStats;
 import main.type.ItemAttributes;
 import mindustry.Vars;
+import mindustry.content.Items;
 import mindustry.type.Item;
 
 public class DelveItems {
 
-    public static Item stone, rust, geothite, malachite, azuritePowder, shadesteel, progenate;
+    public static DelveItem stone, rust, geothite, malachite, azuritePowder, shadesteel, progenate;
 
     public static DelveItem bionorb;
 
@@ -31,14 +32,13 @@ public class DelveItems {
 
         stone = new DelveItem("rubble", Color.gray){{
             ItemAttributes.register(this).
-                    put(ItemAttributes.stone, 1);
+                    put(ItemAttributes.stone, 5);
             size = 16;
         }};
 
         rust = new DelveItem("rust", Color.valueOf("9d755d")){{
             ItemAttributes.register(this).
-                    put(ItemAttributes.stone, 2).
-                    put(ItemAttributes.iron, 5);
+                    put(ItemAttributes.iron, 3);
         }};
 
         geothite = new DelveItem("concertum", Color.valueOf("9d755d")){{
@@ -72,12 +72,14 @@ public class DelveItems {
 
         bionorb = new SpoilageItem("bionorb"){{
             size = 8;
-            defaultFreshness = 60;
+            defaultFreshness = 60 * 10;
         }};
 
         duonium = new TurretItem("duonium"){{
             size = 8;
         }};
+
+        ItemAttributes.register(Items.sand).put(ItemAttributes.stone, 1);
 
         Vars.content.items().each(i -> {
             if(ItemAttributes.get(i) != null) MeldStats.itemAttributes(i, i.stats);

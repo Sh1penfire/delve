@@ -1,4 +1,4 @@
-package main.units.weapons;
+package main.entities.units.weapons;
 
 import arc.Core;
 import arc.graphics.Color;

@@ -1,12 +1,10 @@
 package main.content;
 
-import main.units.weapons.LaserGun;
-import mindustry.audio.SoundControl;
+import main.entities.units.weapons.LaserGun;
 import mindustry.entities.bullet.BulletType;
 import mindustry.gen.UnitEntity;
 import mindustry.graphics.Pal;
 import mindustry.type.UnitType;
-import mindustry.type.weapons.RepairBeamWeapon;
 
 public class DelveUnits {
 

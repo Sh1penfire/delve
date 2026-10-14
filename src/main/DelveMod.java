@@ -7,7 +7,6 @@ import arc.graphics.g2d.Draw;
 import arc.struct.Seq;
 import arc.util.*;
 import main.blocks.EnergyField;
-import main.blocks.WallBlaster;
 import main.blocks.distrib.DelveConveyorBlock;
 import main.blocks.interfaces.ItemStateHolder;
 import main.content.DelveAspects;
@@ -15,17 +14,16 @@ import main.content.DelveItems;
 import main.content.blocks.*;
 import main.content.DelveUnits;
 import main.content.modifiers.VanillaCostModifier;
+import main.content.units.DelvePlayerUnits;
 import main.graphs.ConveyorGraph;
+import main.items.types.DelveItem;
 import main.type.ItemState;
 import mindustry.Vars;
-import mindustry.content.Blocks;
 import mindustry.game.EventType;
 import mindustry.gen.Building;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.mod.*;
-import mindustry.world.blocks.environment.StaticTree;
-import mindustry.world.blocks.environment.StaticWall;
 import rhino.ImporterTopLevel;
 import rhino.NativeJavaPackage;
 
@@ -66,7 +64,7 @@ public class DelveMod extends Mod{
                 }
             }
             if(build instanceof ItemStateHolder holder){
-                Seq<ItemState> list = holder.list();
+                Seq<ItemState> list = holder.inventory().states;
                 if(list != null) list.each(state -> {
                     if(state.attributes != null) state.attributes.map.each((entry) -> {
                         Drawf.text(Strings.format("@: @", entry.key, Strings.fixed(entry.value, 1)), dx, dy, Color.red);
@@ -78,6 +76,7 @@ public class DelveMod extends Mod{
         });
 
         DelveUnits.load();
+        DelvePlayerUnits.load();
         DelveAspects.load();
         DelveItems.load();
 
@@ -109,7 +108,8 @@ public class DelveMod extends Mod{
                 "main.content.blocks",
                 "main.world",
                 "main.fluid",
-                "main.graphics"
+                "main.graphics",
+                "main.items"
         );
 
         packages.each(name -> {

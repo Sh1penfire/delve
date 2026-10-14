@@ -1,4 +1,4 @@
-package main.items;
+package main.items.types;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -8,21 +8,15 @@ import arc.math.Angles;
 import arc.math.Mathf;
 import arc.util.Time;
 import arc.util.Tmp;
-import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Items;
 import mindustry.entities.Units;
 import mindustry.entities.bullet.BulletType;
-import mindustry.game.Team;
-import mindustry.gen.Entityc;
 import mindustry.gen.Teamc;
-import mindustry.gen.Unit;
-import mindustry.graphics.Layer;
 import mindustry.world.blocks.defense.turrets.ItemTurret;
-import mindustry.world.draw.DrawTurret;
 
-public class TurretItem extends DelveItem{
+public class TurretItem extends DelveItem {
 
     public float reload = 20;
     public int clip = 10;
@@ -37,7 +31,6 @@ public class TurretItem extends DelveItem{
 
     public TurretItem(String name, Color color) {
         super(name, color);
-        constructor = () -> new TurretItemState(this, size);
         bullet = ((ItemTurret) Blocks.duo).ammoTypes.get(Items.copper);
     }
     public TurretItem(String name) {

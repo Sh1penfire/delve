@@ -5,8 +5,6 @@ import main.blocks.environment.ItemPile;
 import main.blocks.environment.ItemStatePile;
 import main.blocks.environment.OreBlock;
 import main.content.DelveItems;
-import main.items.DelveItem;
-import mindustry.world.blocks.environment.StaticWall;
 
 public class DelveEnvBlocks {
     public static OreBlock oreBlock;

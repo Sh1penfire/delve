@@ -2,8 +2,7 @@ package main.content.blocks;
 
 import main.blocks.core.DelveCoreBlock;
 import main.content.DelveItems;
-import main.items.DelveItem;
-import mindustry.content.UnitTypes;
+import main.content.units.DelvePlayerUnits;
 import mindustry.type.Category;
 import mindustry.type.ItemStack;
 
@@ -16,7 +15,7 @@ public class DelveStorageBlocks {
             requirements(Category.effect, ItemStack.with(DelveItems.crystalisedCopper, 500, DelveItems.crystalisedIron, 800));
             size = 3;
             health = 800;
-            unitType = UnitTypes.alpha;
+            unitType = DelvePlayerUnits.hauler;
             itemCapacity = 4000;
         }};
     }
