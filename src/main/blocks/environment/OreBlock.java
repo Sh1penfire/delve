@@ -2,7 +2,6 @@ package main.blocks.environment;
 
 import arc.Graphics;
 import arc.graphics.Color;
-import arc.graphics.g2d.Draw;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Table;
 import arc.struct.Bits;
@@ -11,14 +10,13 @@ import arc.util.Scaling;
 import arc.util.Strings;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
+import main.content.DelveItems;
 import main.content.blocks.DelveEnvBlocks;
-import main.items.ItemEntryIDMap;
+import main.items.ItemConstructors;
 import mindustry.Vars;
 import mindustry.content.Blocks;
-import mindustry.content.Items;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
-import mindustry.graphics.Layer;
 import mindustry.graphics.Pal;
 import mindustry.io.TypeIO;
 import mindustry.type.Category;
@@ -106,7 +104,7 @@ public class OreBlock extends Block {
         @Override
         public void killed() {
             super.killed();
-            var pile = ItemStatePile.create(tile.x, tile.y, ItemEntryIDMap.getState(itemDropMap.get(parrent, Items.sand)));
+            var pile = ItemStatePile.create(tile.x, tile.y, ItemConstructors.getEntry(itemDropMap.get(parrent, DelveItems.stone).name).get(Vars.world));
         }
 
         @Override

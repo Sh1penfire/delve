@@ -1,6 +1,5 @@
-package main.items;
+package main.items.types;
 
-import arc.graphics.Color;
 import main.type.ItemAttributes;
 
 public class AttributeItem extends DelveItem{

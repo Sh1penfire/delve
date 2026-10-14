@@ -23,7 +23,7 @@ public class DelveDistribBlocks {
         grabber = new DelveGrabberBlock("grabber"){{
             requirements(Category.distribution, ItemStack.with(DelveItems.crystalisedIron, 40));
             size = 3;
-            consumePower(1);
+            consumePower(DelveBlocks.basePowerConsumption);
         }};
     }
 }

@@ -1,4 +1,4 @@
-package main.items;
+package main.items.types;
 
 import arc.Core;
 import arc.Events;
@@ -8,7 +8,7 @@ import arc.graphics.g2d.Draw;
 import arc.math.Mathf;
 import arc.struct.ObjectFloatMap;
 import arc.util.Nullable;
-import main.graphs.ConveyorGraph;
+import main.items.ItemConstructors;
 import main.meta.MeldStats;
 import main.type.ItemAttributes;
 import main.type.ItemState;
@@ -17,6 +17,14 @@ import mindustry.graphics.Layer;
 import mindustry.type.Item;
 
 public class DelveItem extends Item {
+
+    public DelveItem(String name) {
+        this(name, new Color(Color.black));
+    }
+
+    public DelveItem(String name, Color color) {
+        super(name, color);
+    }
 
     public static float defaultSize = 4;
 
@@ -29,14 +37,14 @@ public class DelveItem extends Item {
 
     public boolean stackable, runsOut;
 
-    public Prov<ItemState> constructor = () -> new UpdateItemState(this, size);
+    public Prov<UpdateItemState> constructor = () -> new UpdateItemState(this, size);
 
     public void update(ItemState state, float x, float y){
 
     }
 
     public void draw(ItemState state, float x, float y){
-        Draw.rect(state.type.fullIcon, x, y);
+        Draw.rect(state.type.getBase().fullIcon, x, y);
     };
 
     @Override
@@ -45,24 +53,17 @@ public class DelveItem extends Item {
         MeldStats.itemAttributes(this, stats);
     }
 
-    public class UpdateItemState extends ItemState {
+    public static class UpdateItemState extends ItemState {
 
         public DelveItem item;
+
+        public boolean stackable = true;
 
         public UpdateItemState(DelveItem item, float size) {
             super(item, size);
             attributes = ItemAttributes.get(item);
             this.item = item;
             data = new ObjectFloatMap<>();
-        }
-        public UpdateItemState(float size) {
-            super(size);
-            data = new ObjectFloatMap<>();
-        }
-
-        @Override
-        public void tweakCondition(float offset) {
-            super.tweakCondition(offset);
         }
 
         @Override
@@ -83,14 +84,11 @@ public class DelveItem extends Item {
         }
     }
 
-    public DelveItem(String name, Color color) {
-        super(name, color);
-    }
-
     @Override
     public void init() {
         super.init();
-        ItemEntryIDMap.put(this, constructor);
+
+        ItemConstructors.put(name, new ItemConstructors.ConstructorEntry(constructor));
 
         if(altNames > 0){
             namesList = new String[altNames];
@@ -103,9 +101,5 @@ public class DelveItem extends Item {
                 }
             });
         }
-    }
-
-    public DelveItem(String name) {
-        this(name, new Color(Color.black));
     }
 }

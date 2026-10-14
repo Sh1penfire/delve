@@ -19,6 +19,7 @@ import main.blocks.environment.ItemStatePile;
 import main.blocks.environment.OreBlock;
 import main.blocks.interfaces.ItemStateHolder;
 import main.graphics.TileDrawers;
+import main.items.Inventory;
 import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.game.FogControl;
@@ -76,19 +77,17 @@ public class DelveGrabberBlock extends Block {
 
     public class DelveGrabberBuild extends Building implements ItemStateHolder {
 
-        public Seq<ItemState> itemStates = new Seq<>();
+        public Inventory inventory = new Inventory(itemCapacity);
 
         public ItemStateHolder back;
-
-        public float capacity = 0;
 
 
         //Targeting map for all grabbers on the same team
         public static IntMap<Seq<Tile>> targetMap = new IntMap<Seq<Tile>>();
 
         @Override
-        public Seq<ItemState> list() {
-            return itemStates;
+        public Inventory inventory() {
+            return inventory;
         }
 
         @Override
@@ -98,20 +97,19 @@ public class DelveGrabberBlock extends Block {
 
         @Override
         public ItemState topState() {
-            return itemStates.size == 0 ? null : itemStates.peek();
+            return inventory.peek();
         }
 
         @Override
         public void removeState(ItemState state) {
-            itemStates.remove(state);
-            capacity -= state.size;
+            inventory.remove(state);
             state.parrent = null;
         }
 
         @Override
         public void handleState(ItemState state) {
             ItemStateHolder.super.handleState(state);
-            capacity += state.size;
+            inventory.add(state);
             state.parrent = this;
         }
 
@@ -173,7 +171,7 @@ public class DelveGrabberBlock extends Block {
 
             if(back != null){
                 while (true){
-                    ItemState top = itemStates.firstOpt();
+                    ItemState top = inventory.peek();
 
                     if(top == null) break;
 
@@ -210,12 +208,14 @@ public class DelveGrabberBlock extends Block {
                     hand.pos.approach(Tmp.v1.set(this), handSpeed);
 
                     if(hand.pos.within(Tmp.v1.set(this), size * Vars.tilesize/2f)){
-                        if(capacity >= itemCapacity) return;
+                        //Dump resources at block
 
+                        if(inventory.size >= inventory.capacity) return;
 
-                        itemStates.addAll(hand.grabbed);
+                        hand.grabbed.each(state -> {
+                            inventory.add(state);
+                        });
                         hand.grabbed.clear();
-                        capacity += hand.capacity;
                         hand.capacity = 0;
                     }
                 }
@@ -224,11 +224,11 @@ public class DelveGrabberBlock extends Block {
 
                     if(hand.pos.within(hand.targ, Vars.tilesize/2f)){
 
-                        while (hand.capacity < handSize && !hand.targ.states.isEmpty()){
+                        while (hand.capacity < handSize && !hand.targ.inventory.isEmpty()){
                             ItemState state = hand.targ.topState();
                             hand.grabbed.add(state);
                             hand.targ.removeState(state);
-                            hand.capacity += state.size;
+                            hand.capacity += state.size.getBase();
                         }
 
                         hand.targ = null;

@@ -11,6 +11,7 @@ import arc.struct.Seq;
 import arc.util.*;
 import main.blocks.distrib.DelveConveyorBlock;
 import main.blocks.interfaces.ItemStateHolder;
+import main.items.Inventory;
 import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.content.Fx;
@@ -756,7 +757,7 @@ public class ConveyorGraph {
 
         public ConveyorEntry(ItemState itemState){
             this.itemState = itemState;
-            this.size = itemState.size;
+            this.size = itemState.size.getBase();
         }
         public ConveyorEntry(ItemState itemState, float size){
             this.itemState = itemState;
@@ -822,7 +823,7 @@ public class ConveyorGraph {
                 //Attach the entry onto the last possible
                 entry.next = highway.entries.peek();
 
-                //Add the entry to the target highway's list
+                //Add the entry to the target highway's inventory
                 highway.entries.add(entry);
                 entry.distToFront = highway.startGap;
             }
@@ -841,7 +842,7 @@ public class ConveyorGraph {
     public static class Highway implements ItemStateHolder {
 
         @Override
-        public Seq<ItemState> list() {
+        public Inventory inventory() {
             return null;
         }
 
