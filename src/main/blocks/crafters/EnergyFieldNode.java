@@ -1,7 +1,9 @@
 package main.blocks.crafters;
 
 import arc.graphics.g2d.Draw;
+import arc.math.Mathf;
 import arc.math.geom.Geometry;
+import arc.math.geom.Point2;
 import arc.struct.IntMap;
 import arc.util.Time;
 import arc.util.io.Reads;
@@ -52,6 +54,8 @@ public class EnergyFieldNode extends PowerNode {
     public class EnergyFieldBuild extends PowerNodeBuild{
         public static float drawTimestamp = Time.globalTime;
 
+        public EnergyField.FieldCircle circle = new EnergyField.FieldCircle();
+
         @Override
         public void update() {
             super.update();
@@ -65,34 +69,14 @@ public class EnergyFieldNode extends PowerNode {
         }
 
         public void setupField(Tile center){
-            Geometry.circle(center.x, center.y, fieldRange, (tx, ty) -> {
-                Tile curTile = Vars.world.tile(tx, ty);
-                if(curTile == null) return;
-
-                int value = EnergyField.coverage[curTile.x][curTile.y];
-                if(value == 0) EnergyField.total++;
-                EnergyField.coverage[curTile.x][curTile.y] = value + 1;
-            });
+            circle.set(center.x, center.y, fieldRange);
+            EnergyField.add(circle);
         }
 
         @Override
         public void onRemoved() {
             super.onRemoved();
-
-            Geometry.circle(tile.x, tile.y, fieldRange, (tx, ty) -> {
-                Tile tile = Vars.world.tile(tx, ty);
-                if(tile == null) return;
-
-                int value = EnergyField.coverage[tx][ty];
-
-
-                if(value == 0) return;
-
-                EnergyField.coverage[tx][ty] = value - 1;
-                if(value == 1) {
-                    EnergyField.total--;
-                }
-            });
+            EnergyField.remove(circle);
         }
 
         @Override
@@ -109,6 +93,21 @@ public class EnergyFieldNode extends PowerNode {
             for (int tx = 0; tx < Vars.world.width(); tx++) {
                 for (int ty = 0; ty < Vars.world.height(); ty++) {
                     if(EnergyField.coverage[tx][ty] == 0) continue;
+
+                    boolean edge = false;
+                    for(int i = 0; i < 4; i++){
+                        Point2 offset = Geometry.d4(i);
+                        int ox = Mathf.clamp(tx + offset.x, 0, EnergyField.coverage.length - 1), oy = Mathf.clamp(ty + offset.y, 0, EnergyField.coverage[tx].length - 1);
+                        if(EnergyField.coverage[ox][oy] < 1){
+                            edge = true;
+                            break;
+                        }
+                    }
+
+                    if(edge){
+                        TileDrawers.drawFieldEdge(tx * Vars.tilesize, ty * Vars.tilesize, Vars.tilesize/2f);
+                        continue;
+                    }
                     TileDrawers.drawField(tx * Vars.tilesize, ty * Vars.tilesize, Vars.tilesize/2f);
                 }
             }

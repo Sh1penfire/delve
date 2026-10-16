@@ -8,27 +8,19 @@ import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import arc.math.geom.Vec2;
 import arc.struct.IntMap;
-import arc.struct.IntSeq;
 import arc.struct.Seq;
-import arc.util.Log;
 import arc.util.Nullable;
-import arc.util.Time;
 import arc.util.Tmp;
 import main.DelveGeometry;
 import main.blocks.environment.ItemStatePile;
-import main.blocks.environment.OreBlock;
 import main.blocks.interfaces.ItemStateHolder;
 import main.graphics.TileDrawers;
 import main.items.Inventory;
-import main.type.ItemState;
+import main.items.ItemState;
 import mindustry.Vars;
-import mindustry.game.FogControl;
-import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.world.Block;
 import mindustry.world.Tile;
-import mindustry.world.blocks.defense.Wall;
-import mindustry.world.blocks.production.AttributeCrafter;
 
 public class DelveGrabberBlock extends Block {
 
@@ -40,7 +32,7 @@ public class DelveGrabberBlock extends Block {
 
     public float searchInterval = 5;
 
-    public int range = 8;
+    public int range = 12;
 
     final int searchTimer = timers++;
 
@@ -60,9 +52,8 @@ public class DelveGrabberBlock extends Block {
         super.drawOverlay(x, y, rotation);
         Tile tile = Vars.world.tileWorld(x, y);
         Point2 dir = Geometry.d4(rotation);
-        int trueOffset = 1 - sizeOffset;
 
-        DelveGeometry.cone(tile.x + dir.x * trueOffset, tile.y + dir.y * trueOffset, rotation, range, (tx, ty) -> {
+        DelveGeometry.cone(tile.x, tile.y, rotation, range, (tx, ty) -> {
             if(Vars.fogControl.isVisibleTile(Vars.player.team(), tx, ty)){
                 TileDrawers.drawAccent(tx * Vars.tilesize, ty * Vars.tilesize, Vars.tilesize/2f);
                 return false;
@@ -104,13 +95,6 @@ public class DelveGrabberBlock extends Block {
         public void removeState(ItemState state) {
             inventory.remove(state);
             state.parrent = null;
-        }
-
-        @Override
-        public void handleState(ItemState state) {
-            ItemStateHolder.super.handleState(state);
-            inventory.add(state);
-            state.parrent = this;
         }
 
         public class Hand{
@@ -230,13 +214,14 @@ public class DelveGrabberBlock extends Block {
                             hand.targ.removeState(state);
                             hand.capacity += state.size.getBase();
                         }
-
+                        currentTeamMap.remove(hand.targ.tile);
                         hand.targ = null;
                     }
                 }
             }
         }
 
+        ItemStatePile.ItemStatePileBuild backup, ideal;
         public void updateTargeting(Hand hand){
             hand.movementState = MovmeentStates.IDLE;
 
@@ -251,27 +236,43 @@ public class DelveGrabberBlock extends Block {
                     hand.targ = null;
 
                     //Search for target
-                    int trueOffset = 1 - sizeOffset;
                     hand.targetInterval += edelta();
 
                     if(hand.targetInterval >= searchInterval){
                         hand.targetInterval -= searchInterval;
 
-                        DelveGeometry.cone(tile.x + dir.x * trueOffset, tile.y + dir.y * trueOffset, rotation, range, (x, y) -> {
+                        backup = null;
+                        ideal = null;
+
+                        DelveGeometry.cone(tile.x, tile.y, rotation, range, (x, y) -> {
                             var currentTarg = Vars.world.tile(x, y);
-                            if(currentTeamMap.contains(currentTarg) || currentTarg == null) return false;
+
+                            if(currentTarg == null) return false;
+
 
                             if(currentTarg.build instanceof ItemStatePile.ItemStatePileBuild pile){
-                                hand.targ = pile;
-                                hand.targetInterval = searchInterval;
+                                //Set this as the backup if we can't find a better target
+                                if(currentTeamMap.contains(currentTarg)){
+                                    backup = pile;
+                                    return false;
+                                }
 
-                                currentTeamMap.add(hand.targ.tile);
-
+                                ideal = pile;
                                 return true;
                             }
 
                             return false;
                         });
+
+                        //Switch the ideal target out for the backup tile
+                        if(ideal == null) ideal = backup;
+                        if(ideal != null){
+                            hand.targ = ideal;
+                            hand.targetInterval = searchInterval;
+
+                            currentTeamMap.add(hand.targ.tile);
+                        }
+
                     }
 
                 }

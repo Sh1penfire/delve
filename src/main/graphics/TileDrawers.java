@@ -14,7 +14,14 @@ public class TileDrawers {
 
     public static void drawField(float x, float y, float radius){
         Draw.color(Pal.heal);
-        Draw.alpha(0.1f);
+        Draw.alpha(0.4f);
+        Fill.square(x, y, radius);
+        Draw.reset();
+    }
+
+    public static void drawFieldEdge(float x, float y, float radius){
+        Draw.color(Pal.gray);
+        Draw.alpha(0.4f);
         Fill.square(x, y, radius);
         Draw.reset();
     }

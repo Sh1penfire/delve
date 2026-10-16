@@ -8,7 +8,7 @@ import main.graphs.ConveyorGraph;
 import main.items.Inventory;
 import main.items.types.DelveItem;
 import main.items.ItemConstructors;
-import main.type.ItemState;
+import main.items.ItemState;
 import mindustry.Vars;
 import mindustry.game.Team;
 import mindustry.gen.Building;
