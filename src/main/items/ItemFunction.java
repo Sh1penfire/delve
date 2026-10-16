@@ -1,7 +1,6 @@
 package main.items;
 
 import main.content.DelveItems;
-import main.type.ItemState;
 
 public abstract class ItemFunction {
 
@@ -14,10 +13,18 @@ public abstract class ItemFunction {
 
         @Override
         public ItemState process(ItemState input) {
+            ItemState output = input;
+
             if(input.type.getBase() == DelveItems.malachite){
-                return ItemConstructors.get(DelveItems.azuritePowder.name);
+                output = ItemConstructors.get(DelveItems.azuritePowder.name);
             }
-            return input;
+            if(input.type.getBase() == DelveItems.stone){
+                output = ItemConstructors.get(DelveItems.stoneDust.name);
+            }
+            output.mass.setBase(input.mass.getModified(input.inventory));
+            output.volume.setBase(input.volume.getModified(input.inventory));
+
+            return output;
         }
     }
 }

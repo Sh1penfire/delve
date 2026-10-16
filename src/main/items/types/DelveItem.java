@@ -11,8 +11,8 @@ import arc.util.Log;
 import arc.util.Nullable;
 import main.items.ItemConstructors;
 import main.meta.MeldStats;
-import main.type.ItemAttributes;
-import main.type.ItemState;
+import main.items.ItemAttributes;
+import main.items.ItemState;
 import mindustry.game.EventType;
 import mindustry.graphics.Layer;
 import mindustry.type.Item;
@@ -27,6 +27,8 @@ public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item
         super(name, color);
     }
 
+    public Runnable postInitRunnable;
+
     public static float defaultSize = 4;
 
     public int altNames = 0;
@@ -38,7 +40,8 @@ public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item
     public float mass = 1;
     public float volume = 1;
 
-    public boolean stackable, runsOut;
+    //Whether or not the item can combine, or it comes in discrete packets that can't combine
+    public boolean discrete = true;
 
     public Prov<UpdateItemState> constructor = () -> new UpdateItemState(this, size);
 
@@ -109,5 +112,11 @@ public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item
                 }
             });
         }
+    }
+
+    @Override
+    public void postInit() {
+        super.postInit();
+        if(postInitRunnable != null) postInitRunnable.run();
     }
 }

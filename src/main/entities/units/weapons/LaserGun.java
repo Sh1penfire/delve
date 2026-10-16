@@ -9,6 +9,7 @@ import arc.math.Mathf;
 import arc.math.geom.Vec2;
 import arc.scene.ui.layout.Table;
 import arc.util.Time;
+import main.blocks.environment.DefaultOreBlock;
 import main.blocks.environment.ItemPile;
 import main.blocks.environment.OreBlock;
 import main.content.blocks.DelveEnvBlocks;
@@ -146,7 +147,7 @@ public class LaserGun extends Weapon {
                         if(t.block() != null && t.build == null){
                             Block wall = t.block();
                             t.setBlock(DelveEnvBlocks.oreBlock);
-                            ((OreBlock.OreBlockBuild) t.build).parrent = wall;
+                            ((DefaultOreBlock.DefaultOreBuild) t.build).parrentBlock = wall;
 
                             //TODO: Switch to derelict when allowDerelictRepair:false actually works as intended
                             t.build.team = Vars.state.rules.defaultTeam;

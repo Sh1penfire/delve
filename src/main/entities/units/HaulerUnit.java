@@ -1,19 +1,24 @@
 package main.entities.units;
 
-import arc.struct.Seq;
+import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Lines;
+import arc.util.Strings;
 import arc.util.Tmp;
 import main.blocks.interfaces.ItemStateHolder;
 import main.content.blocks.DelveStorageBlocks;
+import main.content.units.DelvePlayerUnits;
 import main.items.Inventory;
-import main.type.ItemState;
+import main.items.ItemState;
 import mindustry.Vars;
 import mindustry.entities.EntityCollisions;
 import mindustry.gen.TankUnit;
+import mindustry.graphics.Drawf;
+import mindustry.graphics.Layer;
 
 public class HaulerUnit extends TankUnit implements ItemStateHolder {
 
     public Inventory inventory = new Inventory(itemCapacity());
-    public float capacity = 0;
 
     @Override
     public EntityCollisions.SolidPred solidity() {
@@ -22,7 +27,7 @@ public class HaulerUnit extends TankUnit implements ItemStateHolder {
 
     @Override
     public int classId() {
-        return super.classId();
+        return DelvePlayerUnits.classID(getClass());
     }
 
     @Override
@@ -43,8 +48,8 @@ public class HaulerUnit extends TankUnit implements ItemStateHolder {
     float totalOffset = 0;
     @Override
     public void handleState(ItemState state) {
-        inventory.add(state);
-        state.parrent = this;
+
+        ItemStateHolder.super.handleState(state);
 
         totalOffset = hitSize;
 
@@ -83,5 +88,21 @@ public class HaulerUnit extends TankUnit implements ItemStateHolder {
     public void draw() {
         super.draw();
         inventory.each(ItemState::draw);
+
+        float dx = x, dy = y - Vars.tilesize * 2.5f;
+
+
+        Drawf.text(Strings.format("@/@", inventory.size, inventory.capacity), dx, dy, Color.white);
+        dy -= Vars.tilesize/2f;
+        float width = 8;
+
+        Draw.z(Layer.overlayUI);
+        Lines.stroke(2);
+        Draw.color(Color.gray);
+        Lines.line(dx - width, dy, dx - width + width * 2, dy);
+        Lines.stroke(1);
+        Draw.color(Color.white);
+        Lines.line(dx - width, dy, dx - width + width * inventory.fullness() * 2, dy);
     }
+
 }

@@ -4,6 +4,9 @@ import arc.Core;
 import arc.Events;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.Lines;
+import arc.input.KeyBind;
+import arc.input.KeyCode;
 import arc.struct.Seq;
 import arc.util.*;
 import main.blocks.EnergyField;
@@ -16,11 +19,16 @@ import main.content.modifiers.VanillaCostModifier;
 import main.content.units.DelvePlayerUnits;
 import main.data.Modifyable;
 import main.graphs.ConveyorGraph;
+import main.items.ItemConstructors;
+import main.items.ItemState;
+import mindustry.Vars;
+import mindustry.content.StatusEffects;
 import main.type.ItemState;
 import mindustry.Vars;
 import mindustry.core.World;
 import mindustry.game.EventType;
 import mindustry.gen.Building;
+import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.mod.*;
@@ -35,10 +43,35 @@ public class DelveMod extends Mod{
     }
 
     float dx, dy;
+    boolean focusMode = false;
+    float interactionRadius =  Vars.tilesize * 8;
     @Override
     public void loadContent(){
+        Events.run(EventType.Trigger.update, () -> {
+            focusMode = Core.input.keyDown(KeyCode.tab);
+            if(focusMode){
+                Vars.player.unit().apply(StatusEffects.disarmed, 5);
+                if(Core.input.keyTap(KeyCode.mouseLeft)){
+                    Building build = Vars.world.buildWorld(Core.input.mouseWorldX(), Core.input.mouseWorldY());
+                    Log.info("Clicked @!", build);
+                    if(build instanceof ItemStateHolder holder && Vars.player.unit() instanceof ItemStateHolder inventoryling){
+                        Log.info("trying to transfer!");
+                        if(Vars.player.unit().dst(build) <= interactionRadius) {
+                            if (inventoryling.acceptsItemState(holder.topState()))
+                                ItemStateHolder.handleTransfer(holder, holder.topState(), inventoryling);
+                        }
+                    }
+                }
+            }
+        });
 
         Events.run(EventType.Trigger.drawOver, () -> {
+
+            Unit current = Vars.player.unit();
+            if(focusMode && current != null){
+                Lines.circle(current.x, current.y, interactionRadius);
+            }
+
             Draw.z(Layer.flyingUnit);
             Tmp.v1.set(Core.input.mouseWorld());
 
@@ -75,8 +108,13 @@ public class DelveMod extends Mod{
                         dy -= 3;
                         dx += 1;
                     });
+                    Drawf.text(state.volume.getBase().toString(), dx, dy, Color.magenta);
                 });
             }
+        });
+
+        Vars.content.items().each(item -> {
+            if(!ItemConstructors.idMap.containsKey(item.name)) ItemConstructors.put(item.name, new ItemConstructors.VanillaEntry(item));
         });
 
         DelvePlayerUnits.load();
@@ -114,6 +152,7 @@ public class DelveMod extends Mod{
     @Override
     public void init() {
         super.init();
+
         Vars.mods.getScripts().runConsole(
                 "function buildWorldP(){return Vars.world.buildWorld(Vars.player.x, Vars.player.y)}");
         Vars.mods.getScripts().runConsole(
@@ -123,6 +162,7 @@ public class DelveMod extends Mod{
         Seq<String> packages = Seq.with(
                 "main",
                 "main.blocks",
+                "main.blocks.interfaces",
                 "main.content",
                 "main.content.blocks",
                 "main.world",

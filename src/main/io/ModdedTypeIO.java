@@ -5,7 +5,7 @@ import arc.util.io.Reads;
 import arc.util.io.Writes;
 import main.items.Inventory;
 import main.items.ItemConstructors;
-import main.type.ItemState;
+import main.items.ItemState;
 import mindustry.Vars;
 
 public class ModdedTypeIO {

@@ -1,13 +1,12 @@
-package main.type;
+package main.items;
 
 import arc.graphics.g2d.Draw;
-import arc.math.Mathf;
 import arc.struct.ObjectFloatMap;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
 import main.blocks.interfaces.ItemStateHolder;
 import main.data.InventoryModifyable;
-import main.items.Inventory;
+import mindustry.entities.abilities.Ability;
 import mindustry.io.TypeIO;
 import mindustry.type.Item;
 
@@ -37,16 +36,26 @@ public class ItemState implements Cloneable{
     public InventoryModifyable<Float> size = new InventoryModifyable<>(1f);
 
     /**
-     * Mass of the item. Measured in "u" for unit.
+     * Current mass of the item. Measured in "u" for unit.
      */
 
     public InventoryModifyable<Float> mass = new InventoryModifyable<>(1f);
+    /**
+     * Base mass of the item which attributes scale off of. Measured in "u" for unit. Used to scale attributes relative to mass/baseMass
+     */
+
+    public InventoryModifyable<Float> baseMass = new InventoryModifyable<>(1f);
 
     /**
      * How much physical space an item takes up. Measured in v
      * Used instead of stack size to determine how much of an item should fit in a container
      */
     public InventoryModifyable<Float> volume = new InventoryModifyable<>(1f);
+
+    /**
+    *Whether this item can combine with the same type
+     */
+    public InventoryModifyable<Boolean> discrete = new InventoryModifyable<>(true);
 
     //Position in the world
     public float x, y;
@@ -67,20 +76,20 @@ public class ItemState implements Cloneable{
 
     //Attempt to combine the two states. Return if the other state should be consumed
     public boolean combine(ItemState other){
-        if(other.type == this.type) {
+        if(!discrete.getModified(inventory) && !other.discrete.getModified(other.inventory) && other.type.getModified(other.inventory) == this.type.getModified(other.inventory)) {
             float totalVolume = this.volume.getBase() + other.volume.getBase();
+            float totalMass = this.mass.getBase() + other.mass.getBase();
 
             //Remove the condition required to bring this item's condition up to 100%
-            other.volume.setBase(1 - volume.getBase());
-
-            this.volume.setBase(Mathf.clamp(totalVolume, 0, 1));
+            volume.setBase(totalVolume);
+            mass.setBase(totalMass);
             return true;
         }
         return false;
     }
 
     public boolean canCombine(ItemState other){
-        return type == other.type;
+        return type.getModified(inventory) == other.type.getModified(other.inventory) && !discrete.getModified(inventory) && !other.discrete.getModified(other.inventory);
     }
 
     public void update(){};
@@ -145,14 +154,29 @@ public class ItemState implements Cloneable{
         }
     }
 
-    @Override
-    public ItemState clone() {
-        try {
-            ItemState clone = (ItemState) super.clone();
-            // TODO: copy mutable state here, so the clone can't change the internals of the original
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
+    public ItemState copy(){
+        try{
+            return (ItemState) clone();
+        }catch(CloneNotSupportedException e){
+            //I am disbrusted
+            throw new RuntimeException("java sucks", e);
         }
+    }
+
+    @Override
+    protected ItemState clone() throws CloneNotSupportedException {
+        ItemState state = (ItemState) super.clone();
+        state.type = new InventoryModifyable<>(type.getBase());
+        state.size = new InventoryModifyable<>(size.getBase());
+        state.mass = new InventoryModifyable<>(mass.getBase());
+        state.baseMass = new InventoryModifyable<>(baseMass.getBase());
+        state.volume = new InventoryModifyable<>(volume.getBase());
+        state.discrete = new InventoryModifyable<>(discrete.getBase());
+        if(data != null) {
+            state.data = new ObjectFloatMap<>();
+            state.data.set(data);
+        }
+
+        return state;
     }
 }

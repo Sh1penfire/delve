@@ -6,7 +6,7 @@ import main.items.types.DelveItem;
 import main.items.types.SpoilageItem;
 import main.items.types.TurretItem;
 import main.meta.MeldStats;
-import main.type.ItemAttributes;
+import main.items.ItemAttributes;
 import mindustry.Vars;
 import mindustry.content.Items;
 import mindustry.type.Item;
@@ -14,6 +14,8 @@ import mindustry.type.Item;
 public class DelveItems {
 
     public static DelveItem stone, rust, geothite, malachite, azuritePowder, shadesteel, progenate;
+
+    public static DelveItem stoneDust;
 
     public static DelveItem bionorb;
 
@@ -31,8 +33,19 @@ public class DelveItems {
 
         stone = new DelveItem("rubble", Color.gray){{
             ItemAttributes.register(this).
-                    put(ItemAttributes.stone, 5);
+                    put(ItemAttributes.stone, 12);
             size = 16;
+            volume = 12;
+        }};
+
+        stoneDust = new DelveItem("rubble-dust", Color.gray){{
+            postInitRunnable = () -> {
+            };
+            ItemAttributes.register(this).
+                    put(ItemAttributes.stone, 1);
+            size = 0.5f;
+
+            discrete = false;
         }};
 
         rust = new DelveItem("rust", Color.valueOf("9d755d")){{
@@ -44,6 +57,7 @@ public class DelveItems {
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 2).
                     put(ItemAttributes.iron, 5);
+
         }};
 
         malachite = new DelveItem("placithite", Color.valueOf("9d755d")){{
@@ -58,7 +72,8 @@ public class DelveItems {
                     .put(ItemAttributes.sekos, 1);
             altNamePrefix = "blue-dust";
             altNames = 9;
-            stackable = true;
+
+            discrete = false;
         }};
 
         shadesteel = new DelveItem("shadesteel", Color.valueOf("9d755d")){{
@@ -78,7 +93,6 @@ public class DelveItems {
             size = 8;
         }};
 
-        ItemAttributes.register(Items.sand).put(ItemAttributes.stone, 1);
 
         Vars.content.items().each(i -> {
             if(ItemAttributes.get(i) != null) MeldStats.itemAttributes(i, i.stats);

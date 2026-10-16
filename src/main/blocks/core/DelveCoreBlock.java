@@ -4,8 +4,8 @@ import arc.struct.Seq;
 import main.blocks.EnergyField;
 import main.blocks.interfaces.ItemStateHolder;
 import main.items.Inventory;
-import main.type.ItemAttributes;
-import main.type.ItemState;
+import main.items.ItemAttributes;
+import main.items.ItemState;
 import mindustry.gen.Unit;
 import mindustry.type.Item;
 import mindustry.world.blocks.storage.CoreBlock;
@@ -59,10 +59,12 @@ public class DelveCoreBlock extends CoreBlock {
 
         @Override
         public void handleState(ItemState state) {
+            float multiplier = state.mass.getModified(state.inventory)/state.baseMass.getModified(state.inventory);
+
             if(state.attributes != null) state.attributes.map.each(entry -> {
                 Item item = ItemAttributes.pureMap.get(entry.key);
                 if(item == null) return;
-                items.add(item, (int) entry.value);
+                items.add(item, (int) (entry.value * multiplier));
             });
             else handleItem(this, state.type.getBase());
         }

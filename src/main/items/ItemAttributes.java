@@ -1,6 +1,5 @@
-package main.type;
+package main.items;
 
-import arc.func.Cons;
 import arc.struct.ObjectFloatMap;
 import arc.struct.ObjectMap;
 import mindustry.type.Item;

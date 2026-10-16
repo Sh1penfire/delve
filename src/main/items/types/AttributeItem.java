@@ -1,6 +1,6 @@
 package main.items.types;
 
-import main.type.ItemAttributes;
+import main.items.ItemAttributes;
 
 public class AttributeItem extends DelveItem{
     public AttributeItem(String name, ItemAttributes.ItemAttribute attribute) {

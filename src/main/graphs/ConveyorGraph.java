@@ -12,7 +12,7 @@ import arc.util.*;
 import main.blocks.distrib.DelveConveyorBlock;
 import main.blocks.interfaces.ItemStateHolder;
 import main.items.Inventory;
-import main.type.ItemState;
+import main.items.ItemState;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.game.Team;

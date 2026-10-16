@@ -5,6 +5,7 @@ import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
 import arc.struct.ObjectMap;
 import arc.util.Tmp;
+import main.blocks.environment.DefaultOreBlock;
 import main.blocks.environment.ItemStatePile;
 import main.blocks.environment.OreBlock;
 import main.content.blocks.DelveEnvBlocks;
@@ -74,7 +75,7 @@ public class WallBlaster extends Block {
                         if(t.build == null && t.block().solid){
                             Block wall = t.block();
                             t.setBlock(DelveEnvBlocks.oreBlock);
-                            ((OreBlock.OreBlockBuild) t.build).parrent = wall;
+                            ((DefaultOreBlock.DefaultOreBuild) t.build).parrentBlock = wall;
 
                             //TODO: Switch to derelict when allowDerelictRepair:false actually works as intended
                             t.build.team = Vars.state.rules.defaultTeam;
