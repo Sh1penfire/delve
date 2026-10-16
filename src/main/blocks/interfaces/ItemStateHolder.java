@@ -23,21 +23,16 @@ public interface ItemStateHolder {
         return room > state.volume.getModified(state.inventory) || room > 0 && !state.discrete.getModified(state.inventory);
     };
 
-    /**
-     * Handle the logic of accepting the item state<br><br>
-     * -Set the state's parrent to this<br>
-     * -Add it to the inventory<br>
-     * -Remove it from its source inventory if aplicable
-     * -Split it if applicable
-     * @param state
-     * @return returns if the original state should be removed
-     */
-    default boolean handleState(ItemState state){
-        float room = inventory().roomFor(state);
+    //Utility method to handle transferring states automatically. Returns the % transfered
+    static float handleTransfer(ItemStateHolder parent, ItemState state, ItemStateHolder target){
 
-        if(inventory().roomFor(state) > state.volume.getModified(state.inventory)){
-            addState(state);
-            return true;
+        float room = target.inventory().roomFor(state);
+        Log.info("Room: @, State volume: @", room, state.volume.getModified(state.inventory));
+
+        if(room >= state.volume.getModified(state.inventory)){
+            parent.removeState(state);
+            target.handleState(state);
+            return 1;
         }
         if(room > 0 && !state.discrete.getModified(state.inventory)){
             float insertRatio = room/state.volume.getModified(state.inventory);
@@ -54,17 +49,24 @@ public interface ItemStateHolder {
             state.volume.setBase(startVolume * remainderf);
             state.mass.setBase(startMass * remainderf);
 
-            Log.info("Insert ratio: @\nState volume: @", insertRatio, state.volume.getModified(state.inventory));
+            Log.info("Insert ratio: @\nState volume: @\nSplit volume: @", insertRatio, state.volume.getBase(), split.volume.getBase());
 
-            addState(split);
-            return false;
+            target.handleState(split);
+            return insertRatio;
         }
-        return false;
-    };
+        return 0;
+    }
 
-    default void addState(ItemState state){
+    /**
+     * Handle the logic of accepting the item state<br><br>
+     * -Set the state's parrent to this<br>
+     * -Add it to the inventory<br>
+     * @param state
+     */
+    default void handleState(ItemState state){
         state.parrent = this;
         inventory().add(state);
+        return;
     };
 
 

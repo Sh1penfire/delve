@@ -70,16 +70,11 @@ public class Inventory {
         if(topState != null && topState.canCombine(state)){
             float currentVolume = topState.volume.getModified(this);
             float currentWeight = topState.mass.getModified(this);
-            boolean shouldCombine = topState.combine(state);
 
             //Add the change in size & weight
             Log.info("Before combining: @,\nAfter combining: @", currentVolume, topState.volume.getModified(this));
             size += topState.volume.getModified(this) - currentVolume;
             weight += topState.mass.getModified(this) - currentWeight;
-
-            if(shouldCombine) {
-                return;
-            }
         }
 
         //Set this as the new top state if it hasn't been combined onto the current top state

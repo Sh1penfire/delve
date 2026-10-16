@@ -57,6 +57,7 @@ public class DelveItems {
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 2).
                     put(ItemAttributes.iron, 5);
+
         }};
 
         malachite = new DelveItem("placithite", Color.valueOf("9d755d")){{

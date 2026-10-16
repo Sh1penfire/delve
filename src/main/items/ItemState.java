@@ -81,8 +81,6 @@ public class ItemState implements Cloneable{
             float totalMass = this.mass.getBase() + other.mass.getBase();
 
             //Remove the condition required to bring this item's condition up to 100%
-            other.volume.setBase(1 - volume.getBase());
-
             volume.setBase(totalVolume);
             mass.setBase(totalMass);
             return true;
@@ -91,7 +89,7 @@ public class ItemState implements Cloneable{
     }
 
     public boolean canCombine(ItemState other){
-        return type == other.type && !discrete.getModified(inventory) && !other.discrete.getModified(other.inventory);
+        return type.getModified(inventory) == other.type.getModified(other.inventory) && !discrete.getModified(inventory) && !other.discrete.getModified(other.inventory);
     }
 
     public void update(){};
@@ -163,5 +161,22 @@ public class ItemState implements Cloneable{
             //I am disbrusted
             throw new RuntimeException("java sucks", e);
         }
+    }
+
+    @Override
+    protected ItemState clone() throws CloneNotSupportedException {
+        ItemState state = (ItemState) super.clone();
+        state.type = new InventoryModifyable<>(type.getBase());
+        state.size = new InventoryModifyable<>(size.getBase());
+        state.mass = new InventoryModifyable<>(mass.getBase());
+        state.baseMass = new InventoryModifyable<>(baseMass.getBase());
+        state.volume = new InventoryModifyable<>(volume.getBase());
+        state.discrete = new InventoryModifyable<>(discrete.getBase());
+        if(data != null) {
+            state.data = new ObjectFloatMap<>();
+            state.data.set(data);
+        }
+
+        return state;
     }
 }

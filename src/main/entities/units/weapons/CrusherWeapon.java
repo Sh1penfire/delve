@@ -7,6 +7,7 @@ import arc.graphics.g2d.Fill;
 import arc.math.Angles;
 import arc.math.Mathf;
 import arc.util.Log;
+import arc.util.Time;
 import arc.util.Tmp;
 import main.blocks.environment.*;
 import main.blocks.interfaces.ItemStateHolder;
@@ -29,23 +30,35 @@ public class CrusherWeapon extends Weapon {
 
     float length = tilesize * 2;
 
+    public float pullStrength = 0.055f;
+    public float grindEffectChance = 0.8f;
+    public float crushingSpeedMulti = 0.15f;
+    public float crushingDragMulti = 0.08f;
+
     public Sound weaponLoopSound = Sounds.none;
 
     @Override
     public void update(Unit unit, WeaponMount mount) {
         super.update(unit, mount);
+        if(!mirror || otherSide == 0){
+            unit.speedMultiplier *= Mathf.lerp(1, crushingSpeedMulti, mount.warmup);
+            unit.dragMultiplier *= Mathf.lerp(1, crushingDragMulti, mount.warmup);
+        }
 
         float
                 mountX = unit.x + Angles.trnsx(unit.rotation - 90, x, y),
                 mountY = unit.y + Angles.trnsy(unit.rotation - 90, x, y);
-        bullet.shootEffect.at(mountX, mountY);
+        if(Mathf.chanceDelta(mount.warmup * grindEffectChance)) bullet.shootEffect.at(mountX, mountY);
+
+        float weaponRotation = unit.rotation + (rotate ? mount.rotation : baseRotation);
+
+        unit.vel.add(Tmp.v1.trns(weaponRotation, pullStrength * Time.delta * mount.warmup));
 
         control.sound.loop(weaponLoopSound,Tmp.v1.set(mountX, mountY), minWarmup);
 
         if(mount.shoot){
             Tmp.v1.trns(unit.rotation, length).add(mountX, mountY);
             World.raycastEachWorld(mountX, mountY, Tmp.v1.x, Tmp.v1.y, (tx, ty) -> {
-                if(Mathf.chance(bullet.trailChance))bullet.hitEffect.at(tx * tilesize, ty * tilesize);
 
                 Tile t = Vars.world.tile(tx, ty);
 
@@ -72,21 +85,22 @@ public class CrusherWeapon extends Weapon {
 
                     ItemState crushed = ItemFunction.crushing.process(state);
                     if(state != crushed) {
-                        Log.info("crushing!");
                         pile.handleState(crushed);
                         pile.removeState(state);
                     }
 
                     if(holder.acceptsItemState(crushed)){
-                        Log.info("Moving!");
-                        if(holder.handleState(crushed)) {
+                        float transferred = ItemStateHolder.handleTransfer(pile, crushed, holder);
+                        if (transferred > 0 && transferred < 1) {
                             Log.info("Splitting!");
-                            pile.removeState(crushed);
                         }
                     }
                     return false;
                 }
-                if(t.build instanceof BreakableWallBuilding) t.build.damage(bullet.damage);
+                if(t.build instanceof BreakableWallBuilding) {
+                    if(Mathf.chanceDelta(bullet.trailChance)) bullet.hitEffect.at(tx * tilesize, ty * tilesize);
+                    t.build.damage(bullet.damage);
+                }
 
                 return true;
             });

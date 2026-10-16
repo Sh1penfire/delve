@@ -58,7 +58,7 @@ public class DelveCoreBlock extends CoreBlock {
         }
 
         @Override
-        public boolean handleState(ItemState state) {
+        public void handleState(ItemState state) {
             float multiplier = state.mass.getModified(state.inventory)/state.baseMass.getModified(state.inventory);
 
             if(state.attributes != null) state.attributes.map.each(entry -> {
@@ -67,8 +67,6 @@ public class DelveCoreBlock extends CoreBlock {
                 items.add(item, (int) (entry.value * multiplier));
             });
             else handleItem(this, state.type.getBase());
-
-            return true;
         }
 
         @Override

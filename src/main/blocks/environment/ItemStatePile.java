@@ -108,8 +108,8 @@ public class ItemStatePile extends Block{
         }
 
         @Override
-        public void addState(ItemState state) {
-            ItemStateHolder.super.addState(state);
+        public void handleState(ItemState state) {
+            ItemStateHolder.super.handleState(state);
             state.x = x;
             state.y = y;
             Log.info("Adding state!");

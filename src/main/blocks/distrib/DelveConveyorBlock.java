@@ -49,9 +49,8 @@ public class DelveConveyorBlock extends Block {
         }
 
         @Override
-        public boolean handleState(ItemState state) {
+        public void handleState(ItemState state) {
             graph.handleEntry(node.toHighway, new ConveyorGraph.ConveyorEntry(state));
-            return true;
         }
 
         /*

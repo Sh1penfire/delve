@@ -7,6 +7,7 @@ import arc.util.Strings;
 import arc.util.Tmp;
 import main.blocks.interfaces.ItemStateHolder;
 import main.content.blocks.DelveStorageBlocks;
+import main.content.units.DelvePlayerUnits;
 import main.items.Inventory;
 import main.items.ItemState;
 import mindustry.Vars;
@@ -26,7 +27,7 @@ public class HaulerUnit extends TankUnit implements ItemStateHolder {
 
     @Override
     public int classId() {
-        return super.classId();
+        return DelvePlayerUnits.classID(getClass());
     }
 
     @Override
@@ -41,9 +42,9 @@ public class HaulerUnit extends TankUnit implements ItemStateHolder {
 
     float totalOffset = 0;
     @Override
-    public boolean handleState(ItemState state) {
+    public void handleState(ItemState state) {
 
-        boolean output = ItemStateHolder.super.handleState(state);
+        ItemStateHolder.super.handleState(state);
 
         totalOffset = hitSize;
 
@@ -52,7 +53,6 @@ public class HaulerUnit extends TankUnit implements ItemStateHolder {
         Tmp.v1.trns(rotation, totalOffset).add(x, y);
         state.x = Tmp.v1.x;
         state.y = Tmp.v1.y;
-        return output;
     }
 
     @Override
@@ -99,4 +99,5 @@ public class HaulerUnit extends TankUnit implements ItemStateHolder {
         Draw.color(Color.white);
         Lines.line(dx - width, dy, dx - width + width * inventory.fullness() * 2, dy);
     }
+
 }

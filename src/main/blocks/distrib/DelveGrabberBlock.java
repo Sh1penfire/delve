@@ -32,7 +32,7 @@ public class DelveGrabberBlock extends Block {
 
     public float searchInterval = 5;
 
-    public int range = 8;
+    public int range = 12;
 
     final int searchTimer = timers++;
 
@@ -52,9 +52,8 @@ public class DelveGrabberBlock extends Block {
         super.drawOverlay(x, y, rotation);
         Tile tile = Vars.world.tileWorld(x, y);
         Point2 dir = Geometry.d4(rotation);
-        int trueOffset = 1 - sizeOffset;
 
-        DelveGeometry.cone(tile.x + dir.x * trueOffset, tile.y + dir.y * trueOffset, rotation, range, (tx, ty) -> {
+        DelveGeometry.cone(tile.x, tile.y, rotation, range, (tx, ty) -> {
             if(Vars.fogControl.isVisibleTile(Vars.player.team(), tx, ty)){
                 TileDrawers.drawAccent(tx * Vars.tilesize, ty * Vars.tilesize, Vars.tilesize/2f);
                 return false;
@@ -236,13 +235,12 @@ public class DelveGrabberBlock extends Block {
                     hand.targ = null;
 
                     //Search for target
-                    int trueOffset = 1 - sizeOffset;
                     hand.targetInterval += edelta();
 
                     if(hand.targetInterval >= searchInterval){
                         hand.targetInterval -= searchInterval;
 
-                        DelveGeometry.cone(tile.x + dir.x * trueOffset, tile.y + dir.y * trueOffset, rotation, range, (x, y) -> {
+                        DelveGeometry.cone(tile.x, tile.y, rotation, range, (x, y) -> {
                             var currentTarg = Vars.world.tile(x, y);
                             if(currentTeamMap.contains(currentTarg) || currentTarg == null) return false;
 
