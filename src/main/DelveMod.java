@@ -23,6 +23,8 @@ import main.items.ItemConstructors;
 import main.items.ItemState;
 import mindustry.Vars;
 import mindustry.content.StatusEffects;
+import main.type.ItemState;
+import mindustry.Vars;
 import mindustry.core.World;
 import mindustry.game.EventType;
 import mindustry.gen.Building;

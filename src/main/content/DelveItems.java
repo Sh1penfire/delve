@@ -97,6 +97,7 @@ public class DelveItems {
         Vars.content.items().each(i -> {
             if(ItemAttributes.get(i) != null) MeldStats.itemAttributes(i, i.stats);
         });
+
     }
 
     //Not sure if ill be using this but just to get it in for the day

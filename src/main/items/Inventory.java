@@ -5,6 +5,7 @@ import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Nullable;
 import mindustry.core.World;
+import mindustry.world.Block;
 
 
 public class Inventory {
@@ -75,6 +76,7 @@ public class Inventory {
             Log.info("Before combining: @,\nAfter combining: @", currentVolume, topState.volume.getModified(this));
             size += topState.volume.getModified(this) - currentVolume;
             weight += topState.mass.getModified(this) - currentWeight;
+            return;
         }
 
         //Set this as the new top state if it hasn't been combined onto the current top state

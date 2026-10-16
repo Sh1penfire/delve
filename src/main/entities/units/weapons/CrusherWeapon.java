@@ -8,6 +8,7 @@ import arc.math.Angles;
 import arc.math.Mathf;
 import arc.util.Log;
 import arc.util.Time;
+import arc.math.geom.Geometry;
 import arc.util.Tmp;
 import main.blocks.environment.*;
 import main.blocks.interfaces.ItemStateHolder;

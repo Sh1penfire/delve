@@ -7,6 +7,7 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.math.Mathf;
 import arc.struct.ObjectFloatMap;
+import arc.util.Log;
 import arc.util.Nullable;
 import main.items.ItemConstructors;
 import main.meta.MeldStats;
@@ -71,6 +72,9 @@ public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item
             attributes = ItemAttributes.get(item);
             this.item = item;
             data = new ObjectFloatMap<>();
+
+            Log.info("State created!");
+            Log.info(type);
         }
 
         @Override

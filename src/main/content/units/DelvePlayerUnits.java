@@ -119,6 +119,7 @@ public class DelvePlayerUnits {
                 rotate = true;
                 rotateSpeed = 2.2f;
                 rotationLimit = 15;
+                rotateSpeed = 8;
                 mirror = true;
                 x = 4;
                 y = 8;
@@ -133,6 +134,7 @@ public class DelvePlayerUnits {
 
 
                 bullet = new BasicBulletType(4f, 40/60f){{
+                bullet = new BasicBulletType(4f, 10){{
                     sprite = "missile-large";
                     smokeEffect = Fx.shootBigSmoke;
                     shootEffect = Fx.shootBigColor;
@@ -146,6 +148,7 @@ public class DelvePlayerUnits {
                     trailChance = 0;
                     shootEffect = Fx.generatespark;
                     despawnEffect = hitEffect = Fx.hitBulletSmall;
+                    recoil = -0.25f;
                 }};
             }});
         }};
