@@ -768,7 +768,7 @@ public class ConveyorGraph {
         public String stateString = "";
         public String belowString = "";
 
-        public float size = 8;
+        public float size;
 
         //Next conveyor entry
         public @Nullable ConveyorEntry next;

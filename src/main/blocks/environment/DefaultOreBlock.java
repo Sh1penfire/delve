@@ -25,17 +25,6 @@ public class DefaultOreBlock extends OreBlock{
             return parrentBlock;
         }
 
-        //Literally all of the shit below is visual until the read/write
-        @Override
-        public void draw() {
-            Draw.z(Layer.blockUnder);
-            if(parrentBlock != block) {
-                parrentBlock.drawBase(tile);
-                return;
-            }
-            super.draw();
-        }
-
         @Override
         public void placed() {
             super.placed();

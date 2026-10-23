@@ -57,6 +57,25 @@ public class LightWallBlock extends Block {
         }
     }
 
+    public static LightMesh squareMesh(float x, float y, float radius){
+        LightMesh output = new LightMesh();
+        output.points.addAll(
+                new LightPoint(x - radius, y - radius),
+                new LightPoint(x + radius, y - radius),
+                new LightPoint(x + radius, y + radius),
+                new LightPoint(x - radius, y + radius)
+        );
+
+        output.vertexes.addAll(
+                new LightVertex(output.points.get(0), output.points.get(1)),
+                new LightVertex(output.points.get(1), output.points.get(2)),
+                new LightVertex(output.points.get(2), output.points.get(3)),
+                new LightVertex(output.points.get(3), output.points.get(0))
+        );
+
+        return output;
+    }
+
     public class LightWallBuild extends Building{
 
         @Override

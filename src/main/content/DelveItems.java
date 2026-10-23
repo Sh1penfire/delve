@@ -13,9 +13,9 @@ import mindustry.type.Item;
 
 public class DelveItems {
 
-    public static DelveItem stone, rust, geothite, malachite, azuritePowder, shadesteel, progenate;
+    public static DelveItem stone, rust, geothite, malachite, azuritePowder, shadesteel, progenate, oldstone;
 
-    public static DelveItem stoneDust;
+    public static DelveItem stoneDust, oldstoneDust;
 
     public static DelveItem bionorb;
 
@@ -26,11 +26,18 @@ public class DelveItems {
     public static AttributeItem crystallineStone, crystalisedIron, crystalisedCopper;
 
     public static void load(){
-
+        //Crystalline Items
         crystalisedIron = new AttributeItem("crystalline-iron", ItemAttributes.iron);
         crystalisedCopper = new AttributeItem("crystalline-copper", ItemAttributes.copper);
         crystallineStone = new AttributeItem("crystalline-stone", ItemAttributes.stone);
 
+        bionorb = new SpoilageItem("bionorb"){{
+            ItemAttributes.register(this).put(ItemAttributes.biochem, 1);
+            ItemAttributes.pureMap.put(ItemAttributes.biochem.name, this);
+            size = 8;
+        }};
+
+        //Basic items
         stone = new DelveItem("rubble", Color.gray){{
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 12);
@@ -38,14 +45,10 @@ public class DelveItems {
             volume = 12;
         }};
 
-        stoneDust = new DelveItem("rubble-dust", Color.gray){{
-            postInitRunnable = () -> {
-            };
+        oldstone = new DelveItem("oldstone", Color.valueOf("9d755d")){{
             ItemAttributes.register(this).
-                    put(ItemAttributes.stone, 1);
-            size = 0.5f;
-
-            discrete = false;
+                    put(ItemAttributes.stone, 0.5f).
+                    put(ItemAttributes.iron, 0.25f);
         }};
 
         rust = new DelveItem("rust", Color.valueOf("9d755d")){{
@@ -76,17 +79,36 @@ public class DelveItems {
             discrete = false;
         }};
 
+
+        //Dusts
+        stoneDust = new DelveItem("rubble-dust", Color.gray){{
+            postInitRunnable = () -> {
+            };
+            ItemAttributes.register(this).
+                    put(ItemAttributes.stone, 1);
+            size = 0.5f;
+
+            discrete = false;
+        }};
+
+        oldstoneDust = new DelveItem("oldstone-dust", Color.gray){{
+            postInitRunnable = () -> {
+            };
+            ItemAttributes.register(this).
+                    put(ItemAttributes.stone, 0.5f)
+                    .put(ItemAttributes.iron, 0.25f);
+            size = 2;
+
+            discrete = false;
+        }};
+
+        //Refined
         shadesteel = new DelveItem("shadesteel", Color.valueOf("9d755d")){{
 
         }};
 
         progenate = new DelveItem("procrium", Color.valueOf("9d755d")){{
 
-        }};
-
-        bionorb = new SpoilageItem("bionorb"){{
-            size = 8;
-            defaultFreshness = 60 * 10;
         }};
 
         duonium = new TurretItem("duonium"){{

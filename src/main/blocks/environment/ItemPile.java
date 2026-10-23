@@ -68,6 +68,7 @@ public class ItemPile extends Block {
         allowDerelictRepair = false;
 
         destroyEffect = Fx.none;
+        underBullets = true;
     }
 
     @Override

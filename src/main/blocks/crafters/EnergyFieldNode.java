@@ -1,6 +1,10 @@
 package main.blocks.crafters;
 
+import arc.Core;
+import arc.graphics.Blending;
 import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.TextureRegion;
+import arc.math.Angles;
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
@@ -8,10 +12,12 @@ import arc.struct.IntMap;
 import arc.util.Time;
 import arc.util.io.Reads;
 import main.blocks.EnergyField;
+import main.graphics.Draww;
 import main.graphics.TileDrawers;
 import mindustry.Vars;
 import mindustry.game.Team;
 import mindustry.gen.Building;
+import mindustry.gen.Icon;
 import mindustry.graphics.Layer;
 import mindustry.world.Tile;
 import mindustry.world.blocks.power.PowerNode;
@@ -19,6 +25,22 @@ import mindustry.world.blocks.power.PowerNode;
 public class EnergyFieldNode extends PowerNode {
     public EnergyFieldNode(String name) {
         super(name);
+    }
+
+    public TextureRegion particleRegion;
+
+    @Override
+    public void load() {
+        super.load();
+        particleRegion = Core.atlas.find("particle");
+    }
+
+    @Override
+    public void drawLaser(float x1, float y1, float x2, float y2, int size1, int size2) {
+        Draw.blend(Blending.additive);
+        Draw.color(laserColor1);
+        Draww.drawChainAlpha(particleRegion, x1, y1, x2, y2, 0.25f, 0.5f, Angles.angle(x2 - x1, y2 - y1), l -> Mathf.absin(l * Mathf.dst(x2 - x1, y2 - y1)/2 - Time.time/5,1, 1));
+        Draw.blend();
     }
 
     @Override

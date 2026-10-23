@@ -21,7 +21,7 @@ public class DelveStorageBlocks {
             requirements(Category.effect, ItemStack.with(DelveItems.crystalisedCopper, 500, DelveItems.crystalisedIron, 800));
             size = 3;
             health = 800;
-            unitType = DelvePlayerUnits.hauler;
+            unitType = DelvePlayerUnits.picker;
             itemCapacity = 4000;
         }};
     }

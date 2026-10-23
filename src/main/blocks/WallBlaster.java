@@ -1,28 +1,37 @@
 package main.blocks;
 
+import arc.graphics.Color;
 import arc.graphics.g2d.Fill;
 import arc.math.geom.Geometry;
 import arc.math.geom.Point2;
+import arc.math.geom.Vec2;
 import arc.struct.ObjectMap;
 import arc.util.Tmp;
 import main.blocks.environment.DefaultOreBlock;
 import main.blocks.environment.ItemStatePile;
 import main.blocks.environment.OreBlock;
 import main.content.blocks.DelveEnvBlocks;
+import main.graphics.DelveFx;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.content.Fx;
+import mindustry.content.UnitTypes;
 import mindustry.gen.Building;
 import mindustry.type.Item;
+import mindustry.type.UnitType;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.environment.StaticWall;
+
+import java.awt.*;
 
 public class WallBlaster extends Block {
 
     public static ObjectMap<Block, Item> itemDropMap = new ObjectMap<>();
 
     public float reload, range;
+
+    public boolean needsSpace = false;
 
     public WallBlaster(String name) {
         super(name);
@@ -32,7 +41,7 @@ public class WallBlaster extends Block {
         range = 9;
 
         rotate = true;
-        quickRotate = true;
+        quickRotate = false;
 
     }
 
@@ -65,11 +74,9 @@ public class WallBlaster extends Block {
                     Tmp.v1.set(x, y).add(dir.x * i * Vars.tilesize, dir.y * i * Vars.tilesize);
                     Tile t = Vars.world.tileWorld(Tmp.v1.x, Tmp.v1.y);
 
-                    Fx.smoke.at(t);
-
                     if(t.solid()) {
 
-                        if(lastValid == null || lastValid.block() != Blocks.air) break;
+                        if(needsSpace && (lastValid == null || lastValid.block() != Blocks.air)) break;
 
                         //Switch static walls to ore block
                         if(t.build == null && t.block().solid){
@@ -81,7 +88,11 @@ public class WallBlaster extends Block {
                             t.build.team = Vars.state.rules.defaultTeam;
                         };
 
-                        if(t.build != null) t.build.damage(20);
+                        if(t.build != null && !t.build.block.underBullets) {
+                            t.build.damage(20);
+                            DelveFx.hitSpark.at(t.worldx(), t.worldy(), rotation * -90);
+                            DelveFx.blastLine.at(this.x, this.y, rotation * 90, Color.orange, new Vec2(t.worldx(), t.worldy()));
+                        }
                         break;
                     }
                     lastValid = t;

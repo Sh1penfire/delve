@@ -35,8 +35,12 @@ public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item
     @Nullable public String altNamePrefix;
     public String[] namesList;
 
+    //Size in VU, or volume units
     public float size = 4;
+
+    //Mass in MU, or mass units
     public float mass = 1;
+
     public float volume = 1;
 
     //Whether or not the item can combine, or it comes in discrete packets that can't combine

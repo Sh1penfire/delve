@@ -6,18 +6,15 @@ import arc.math.geom.Rect;
 import arc.struct.ObjectIntMap;
 import arc.util.Log;
 import main.entities.units.HaulerUnit;
-import main.entities.units.weapons.CrusherWeapon;
+import main.entities.units.weapons.JabberWeapon;
 import mindustry.content.Fx;
-import mindustry.content.StatusEffects;
-import mindustry.content.UnitTypes;
 import mindustry.entities.bullet.BasicBulletType;
+import mindustry.entities.part.RegionPart;
 import mindustry.gen.EntityMapping;
 import mindustry.gen.Entityc;
 import mindustry.gen.Sounds;
 import mindustry.graphics.Pal;
-import mindustry.type.StatusEffect;
 import mindustry.type.UnitType;
-import mindustry.type.Weapon;
 import arc.struct.ObjectMap.Entry;
 
 public class DelvePlayerUnits {
@@ -65,21 +62,20 @@ public class DelvePlayerUnits {
     }
 
 
-    public static UnitType hauler;
+    public static UnitType picker, pogo;
 
     public static void load(){
         setupID();
 
-        hauler = new UnitType("hauler"){{
+        picker = new UnitType("picker"){{
             constructor = HaulerUnit::new;
             rotateToBuilding = false;
             omniMovement = true;
             rotateSpeed = 5.5f;
             drag = 0.3f;
 
-            fogRadius = 5;
-
             drawCell = false;
+            faceTarget = false;
             outlineColor = Color.clear;
 
             mineSpeed = 0;
@@ -87,11 +83,13 @@ public class DelvePlayerUnits {
             buildRange = 80;
             lightRadius = 95;
             lightColor = Pal.accent;
-            lightOpacity = 0.45f;
+            lightOpacity = 1;
+            fogRadius = 2;
+            mechSideSway = mechFrontSway = 0;
 
             hitSize = 20;
             treadPullOffset = 3;
-            speed = 1.25f;
+            speed = 0.75f;
             health = 850;
             armor = 6f;
             itemCapacity = 50;
@@ -102,7 +100,9 @@ public class DelvePlayerUnits {
             tankMoveVolume *= 0.32f;
             tankMoveSound = Sounds.tankMoveSmall;
 
-            weapons.add(new CrusherWeapon(){{
+            parts.add(new RegionPart("-top"));
+
+            weapons.add(new JabberWeapon("delve-picker-weapon"){{
                 /*
                 shootStatus = new StatusEffect("grinding"){{
                     speedMultiplier = 0.15f;
@@ -118,26 +118,34 @@ public class DelvePlayerUnits {
                 layerOffset = 0.0001f;
                 shootY = 4.5f;
                 recoil = 1f;
+
+
+                shootCone = 5;
+
+                reload = 10;
+                knockback = 0;
+                tileDamage = 5;
+                length *= 2;
+
                 rotate = true;
-                rotateSpeed = 2.2f;
-                rotationLimit = 15;
-                mirror = true;
-                x = 4;
-                y = 8;
+                rotateSpeed = 180;
+                mirror = false;
+                x = 0;
+                y = 0;
                 heatColor = Color.valueOf("f9350f");
                 cooldownTime = 30f;
 
-                continuous = alwaysContinuous = true;
+                //continuous = alwaysContinuous = true;
                 alternate = false;
 
                 weaponLoopSound = Sounds.tankMoveHeavy;
-                pullStrength = 0.2f;
+                //pullStrength = 0.2f;
+                pullStrength = 0;
 
-
-                bullet = new BasicBulletType(4f, 40/60f){{
+                bullet = new BasicBulletType(4f, 30/60f){{
                     sprite = "missile-large";
-                    smokeEffect = Fx.shootBigSmoke;
-                    shootEffect = Fx.shootBigColor;
+
+                    shootEffect = Fx.shootBig;
                     width = 5f;
                     height = 7f;
                     lifetime = 40f;
@@ -146,8 +154,93 @@ public class DelvePlayerUnits {
                     frontColor = Color.white;
 
                     trailChance = 0;
-                    shootEffect = Fx.generatespark;
-                    despawnEffect = hitEffect = Fx.hitBulletSmall;
+                }};
+            }});
+        }};
+
+        pogo = new UnitType("pogo"){{
+            constructor = HaulerUnit::new;
+            rotateToBuilding = false;
+            omniMovement = true;
+            rotateSpeed = 5.5f;
+            drag = 0.1f;
+
+            drawCell = false;
+            outlineColor = Color.clear;
+
+            mineSpeed = 0;
+            buildSpeed = 1;
+            buildRange = 80;
+            lightRadius = 95;
+            lightColor = Pal.accent;
+            lightOpacity = 1;
+            fogRadius = 2;
+
+            hitSize = 20;
+            treadPullOffset = 3;
+            speed = 0.75f;
+            health = 850;
+            armor = 6f;
+            itemCapacity = 50;
+            floorMultiplier = 0.95f;
+            treadRects = new Rect[]{new Rect(12 - 32f, 7 - 32f, 14, 51)};
+            researchCostMultiplier = 0f;
+
+            tankMoveVolume *= 0.32f;
+            tankMoveSound = Sounds.tankMoveSmall;
+
+            weapons.add(new JabberWeapon(){{
+                /*
+                shootStatus = new StatusEffect("grinding"){{
+                    speedMultiplier = 0.15f;
+                    dragMultiplier = 0.08f;
+                }};
+
+                 */
+                shootStatusDuration = 15;
+                linearWarmup = true;
+                shootWarmupSpeed = 0.5f/60f;
+
+                shootSound = Sounds.shootStell;
+                layerOffset = 0.0001f;
+                shootY = 4.5f;
+                recoil = 1f;
+
+
+                shootCone = 5;
+
+                reload = 90;
+
+                knockback = 12000;
+                tileDamage = 120;
+
+                rotate = true;
+                rotateSpeed = 180;
+                mirror = false;
+                x = 0;
+                y = 0;
+                heatColor = Color.valueOf("f9350f");
+                cooldownTime = 30f;
+
+                //continuous = alwaysContinuous = true;
+                alternate = false;
+                onlyTiles = true;
+
+                weaponLoopSound = Sounds.tankMoveHeavy;
+                pullStrength = 0.05f;
+
+                bullet = new BasicBulletType(4f, 30/60f){{
+                    sprite = "missile-large";
+
+                    shootEffect = Fx.shootBig;
+                    width = 5f;
+                    height = 7f;
+                    lifetime = 40f;
+                    hitSize = 4f;
+                    hitColor = backColor = trailColor = Color.valueOf("feb380");
+                    frontColor = Color.white;
+
+                    trailChance = 0;
                 }};
             }});
         }};

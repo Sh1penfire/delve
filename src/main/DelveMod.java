@@ -13,12 +13,14 @@ import arc.math.Mathf;
 import arc.math.geom.Geometry;
 import arc.math.geom.Rect;
 import arc.math.geom.Vec2;
+import arc.struct.Bits;
 import arc.struct.Seq;
 import arc.util.*;
 import main.blocks.EnergyField;
 import main.blocks.debug.LightWallBlock;
 import main.blocks.debug.LightWallBlock.LightPoint;
 import main.blocks.distrib.DelveConveyorBlock;
+import main.blocks.info.Lidar;
 import main.blocks.interfaces.ItemStateHolder;
 import main.content.DelveAspects;
 import main.content.DelveItems;
@@ -26,6 +28,8 @@ import main.content.blocks.*;
 import main.content.modifiers.VanillaCostModifier;
 import main.content.units.DelvePlayerUnits;
 import main.data.Modifyable;
+import main.entities.units.DelveEntityCollisions;
+import main.graphics.TileDrawers;
 import main.graphs.ConveyorGraph;
 import main.items.ItemConstructors;
 import main.items.ItemState;
@@ -33,16 +37,25 @@ import main.math.Raycasting;
 import mindustry.Vars;
 import mindustry.content.Fx;
 import mindustry.content.StatusEffects;
+import mindustry.core.ContentLoader;
 import mindustry.core.World;
 import mindustry.entities.Damage;
+import mindustry.entities.bullet.BulletType;
 import mindustry.game.EventType;
+import mindustry.game.FogControl;
+import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.mod.*;
+import mindustry.world.Tile;
+import mindustry.world.blocks.storage.CoreBlock;
 import rhino.ImporterTopLevel;
 import rhino.NativeJavaPackage;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class DelveMod extends Mod{
     public static NativeJavaPackage p = null;
@@ -61,26 +74,56 @@ public class DelveMod extends Mod{
 
     public static Vec2 closest = null, source = new Vec2();
     public static Seq<Vec2> trianglePoints = new Seq<>();
-    public static boolean debugVisuals = false;
+    public static boolean debugVisuals = false, raycastLight = false;
     int r = 0;
     Vec2 ray = new Vec2();
 
+    public static boolean[][] blocked = new boolean[][]{};
+
+    static boolean found = false;
+
+    public static void setupBlocked(){
+
+        blocked = new boolean[Vars.world.width()][Vars.world.height()];
+
+        Vars.world.tiles.each((tx, ty) -> {
+            Tile tile = Vars.world.tile(tx, ty);
+            if(tile == null || !tile.isDarkened()) return;
+            found = false;
+
+            for(int i = 0; i < Geometry.d8.length; i++){
+                Tile nearby = tile.nearby(Geometry.d8(i).x, Geometry.d8(i).y);
+                if(nearby == null) continue;
+                if(nearby.isDarkened()) continue;
+                found = true;
+            }
+            if(!found) return;
+            blocked[tx][ty] = true;
+
+            LightWallBlock.LightMesh mesh = LightWallBlock.squareMesh(tx * Vars.tilesize, ty * Vars.tilesize, Vars.tilesize/2f);
+            LightWallBlock.meshes.add(mesh);
+            LightWallBlock.verts.add(mesh.vertexes);
+            LightWallBlock.points.add(mesh.points);
+        });
+    }
+
     @Override
     public void loadContent(){
+
         Events.run(EventType.Trigger.update, () -> {
+            if(!Vars.state.isPlaying()) return;
             cx = Core.input.mouseWorldX();
             cy = Core.input.mouseWorldY();
             px = Vars.player.x;
             py = Vars.player.y;
             source.set(px, py);
-
-            focusMode = Core.input.keyDown(KeyCode.tab);
-            if(focusMode){
+            if(Core.input.keyTap(KeyCode.tab)) focusMode = !focusMode;
+            if(focusMode && Vars.player.unit() != null){
                 Vars.player.unit().apply(StatusEffects.disarmed, 5);
-                if(Core.input.keyTap(KeyCode.mouseLeft)){
+                if(Core.input.keyTap(KeyCode.mouseLeft) || Core.input.keyDown(KeyCode.mouseLeft) && Core.input.keyDown(KeyCode.controlLeft)){
                     Building build = Vars.world.buildWorld(Core.input.mouseWorldX(), Core.input.mouseWorldY());
                     Log.info("Clicked @!", build);
-                    if(build instanceof ItemStateHolder holder && Vars.player.unit() instanceof ItemStateHolder inventoryling){
+                    if(build instanceof ItemStateHolder holder && holder.inventory() != null && Vars.player.unit() instanceof ItemStateHolder inventoryling){
                         Log.info("trying to transfer!");
                         if(Vars.player.unit().dst(build) <= interactionRadius) {
                             if (inventoryling.acceptsItemState(holder.topState()))
@@ -103,6 +146,7 @@ public class DelveMod extends Mod{
         tmpMesh.vertexes.add(new LightWallBlock.LightVertex(points[1], points[2]));
         tmpMesh.vertexes.add(new LightWallBlock.LightVertex(points[2], points[3]));
         tmpMesh.vertexes.add(new LightWallBlock.LightVertex(points[3], points[0]));
+        tmpMesh.points.addAll(points);
 
         LightWallBlock.meshes.add(tmpMesh);
         LightWallBlock.points.add(points);
@@ -110,7 +154,14 @@ public class DelveMod extends Mod{
 
 
         Events.run(EventType.Trigger.drawOver, () -> {
+
             Draw.z(Layer.fogOfWar + 1);
+
+            for (int x = 0; x < blocked.length; x++){
+                for(int y = 0; y < blocked[x].length; y++){
+                    if(blocked[x][y]) TileDrawers.drawFog(x * Vars.tilesize, y * Vars.tilesize, Vars.tilesize/2f);
+                }
+            }
 
             float toBotLeft = source.angleTo(0, 0);
             Seq<LightPoint> checkingPoints = LightWallBlock.points.sort(target -> (source.angleTo(target) - toBotLeft) % 360);
@@ -118,114 +169,116 @@ public class DelveMod extends Mod{
             trianglePoints.clear();
 
             //The debug visual
-            ray.set(cx, cy).sub(source);
+            if(raycastLight){
+                ray.set(cx, cy).sub(source);
 
-            if(debugVisuals) Lines.line(source.x, source.y, Tmp.v1.set(ray).scl(100).add(source).x, Tmp.v1.y);
-            closest = null;
-            for (int i = 0; i < LightWallBlock.meshes.size; i++) {
+                if(debugVisuals) Lines.line(source.x, source.y, Tmp.v1.set(ray).scl(100).add(source).x, Tmp.v1.y);
+                closest = null;
+                for (int i = 0; i < LightWallBlock.meshes.size; i++) {
 
-                LightWallBlock.LightMesh mesh = LightWallBlock.meshes.get(i);
-                for(int j = 0; j < mesh.vertexes.size; j++){
-                    LightWallBlock.LightVertex vert = mesh.vertexes.get(j);
+                    LightWallBlock.LightMesh mesh = LightWallBlock.meshes.get(i);
+                    for(int j = 0; j < mesh.vertexes.size; j++){
+                        LightWallBlock.LightVertex vert = mesh.vertexes.get(j);
 
-                    LightPoint pStart = vert.start;
-                    LightPoint pEnd = vert.end;
-                    Vec2 intersection = Raycasting.rayIntersect(source.x, source.y, cx, cy, pStart.x, pStart.y, pEnd.x, pEnd.y);
+                        LightPoint pStart = vert.start;
+                        LightPoint pEnd = vert.end;
+                        Vec2 intersection = Raycasting.rayIntersect(source.x, source.y, cx, cy, pStart.x, pStart.y, pEnd.x, pEnd.y);
 
-                    if(intersection != null && !Raycasting.end){
+                        if(intersection != null && !Raycasting.end){
 
-                        if(debugVisuals){
-                            Draw.color(Color.pink);
-                            Lines.line(vert.start.x, vert.start.y, vert.end.x, vert.end.y);
+                            if(debugVisuals){
+                                Draw.color(Color.pink);
+                                Lines.line(vert.start.x, vert.start.y, vert.end.x, vert.end.y);
 
-                            Draw.color(Color.red);
-                            Fill.circle(intersection.x, intersection.y, 2);
-                            Draw.color();
-                        }
+                                Draw.color(Color.red);
+                                Fill.circle(intersection.x, intersection.y, 2);
+                                Draw.color();
+                            }
 
-                        if(closest == null || source.dst(closest) > source.dst(intersection)){
-                            closest = intersection;
-                        }
-                    }
-                }
-            }
-
-
-            //The actual vis polygon code
-            float rayRange = 100;
-
-            r = 0;
-            for (int q = 0; q < checkingPoints.size; q++) {
-                LightPoint target = checkingPoints.get(q);
-
-                if(debugVisuals) Drawf.text(q + "", target.x + Vars.tilesize, target.y-Vars.tilesize, Color.red);
-
-                r++;
-
-                Draw.color(Color.white);
-
-                //Shoot a ray offset in angle by 0.0001 deg on either side. I hate this solution with my being but it'll work.
-                for(int offset = -1; offset < 2; offset++){
-                    float rotOffset = offset;
-                    ray.trns(source.angleTo(target) + rotOffset, rayRange).add(source);
-
-                    if(debugVisuals) Lines.line(source.x, source.y, ray.x, ray.y);
-
-                    closest = null;
-
-                    //Raycast now
-                    for (int i = 0; i < LightWallBlock.meshes.size; i++) {
-
-                        LightWallBlock.LightMesh mesh = LightWallBlock.meshes.get(i);
-                        for(int j = 0; j < mesh.vertexes.size; j++){
-                            LightWallBlock.LightVertex vert = mesh.vertexes.get(j);
-
-                            LightPoint pStart = vert.start;
-                            LightPoint pEnd = vert.end;
-
-                            Vec2 intersection = Raycasting.rayIntersect(source.x, source.y, ray.x, ray.y, pStart.x, pStart.y, pEnd.x, pEnd.y);
-
-                            if(intersection != null){
-
-                                if(debugVisuals) {
-                                    Draw.color(Color.pink);
-                                    Lines.line(vert.start.x, vert.start.y, vert.end.x, vert.end.y);
-
-                                    Draw.color(Color.red);
-                                    Fill.circle(intersection.x, intersection.y, 2);
-                                    Draw.color();
-                                }
-
-                                if(closest == null || source.dst(closest) > source.dst(intersection)){
-                                    closest = intersection;
-                                }
+                            if(closest == null || source.dst(closest) > source.dst(intersection)){
+                                closest = intersection;
                             }
                         }
                     }
+                }
 
-                    if(closest != null){
-                        trianglePoints.add(closest);
+
+                //The actual vis polygon code
+                float rayRange = 100;
+
+                r = 0;
+                for (int q = 0; q < checkingPoints.size; q++) {
+                    LightPoint target = checkingPoints.get(q);
+
+                    if(debugVisuals) Drawf.text(q + "", target.x + Vars.tilesize, target.y-Vars.tilesize, Color.red);
+
+                    r++;
+
+                    Draw.color(Color.white);
+
+                    //Shoot a ray offset in angle by 0.0001 deg on either side. I hate this solution with my being but it'll work.
+                    for(int offset = -1; offset < 2; offset++){
+                        float rotOffset = offset * 0.05f;
+                        ray.trns(source.angleTo(target) + rotOffset, rayRange).add(source);
+
+                        if(debugVisuals) Lines.line(source.x, source.y, ray.x, ray.y);
+
+                        closest = null;
+
+                        //Raycast now
+                        for (int i = 0; i < LightWallBlock.meshes.size; i++) {
+
+                            LightWallBlock.LightMesh mesh = LightWallBlock.meshes.get(i);
+                            for(int j = 0; j < mesh.vertexes.size; j++){
+                                LightWallBlock.LightVertex vert = mesh.vertexes.get(j);
+
+                                LightPoint pStart = vert.start;
+                                LightPoint pEnd = vert.end;
+
+                                Vec2 intersection = Raycasting.rayIntersect(source.x, source.y, ray.x, ray.y, pStart.x, pStart.y, pEnd.x, pEnd.y);
+
+                                if(intersection != null){
+
+                                    if(debugVisuals) {
+                                        Draw.color(Color.pink);
+                                        Lines.line(vert.start.x, vert.start.y, vert.end.x, vert.end.y);
+
+                                        Draw.color(Color.red);
+                                        Fill.circle(intersection.x, intersection.y, 2);
+                                        Draw.color();
+                                    }
+
+                                    if(closest == null || source.dst(closest) > source.dst(intersection)){
+                                        closest = intersection;
+                                    }
+                                }
+                            }
+                        }
+
+                        if(closest != null){
+                            trianglePoints.add(closest);
+                        }
                     }
                 }
-            }
 
-            Lines.stroke(0.5f);
-            if(trianglePoints.size > 1) {
-                for (int i = 0; i < trianglePoints.size; i++) {
-                    Vec2 start = trianglePoints.get((i) % trianglePoints.size);
-                    Vec2 end = trianglePoints.get((i + 1) % trianglePoints.size);
+                Lines.stroke(0.5f);
+                if(trianglePoints.size > 1) {
+                    for (int i = 0; i < trianglePoints.size; i++) {
+                        Vec2 start = trianglePoints.get((i) % trianglePoints.size);
+                        Vec2 end = trianglePoints.get((i + 1) % trianglePoints.size);
 
-                    if(debugVisuals){
-                        Draw.color(Color.white);
-                        Fill.circle(start.x, start.y, 1);
-                        Drawf.text(i + ", " + Strings.fixed(source.angleTo(start), 1), start.x, start.y, Color.white);
+                        if(debugVisuals){
+                            Draw.color(Color.white);
+                            Fill.circle(start.x, start.y, 1);
+                            Drawf.text(i + ", " + Strings.fixed(source.angleTo(start), 1), start.x, start.y, Color.white);
+                        }
+                        Draw.color(Tmp.c1.set(Color.yellow).a(0.25f));
+                        Fill.tri(start.x, start.y, end.x, end.y, source.x, source.y);
                     }
-                    Draw.color(Tmp.c1.set(Color.yellow).a(0.25f));
-                    Fill.tri(start.x, start.y, end.x, end.y, source.x, source.y);
                 }
-            }
-            Fill.light(source.x, source.y, (int) rayRange/10, rayRange, Tmp.c1.set(Color.white), Tmp.c1.set(Color.white).a(0));
+                Fill.light(source.x, source.y, (int) rayRange/10, rayRange, Tmp.c1.set(Color.white), Tmp.c1.set(Color.white).a(0));
 
+            }
             /*
             for (int i = 0; i < LightWallBlock.meshes.size; i++) {
 
@@ -283,6 +336,7 @@ public class DelveMod extends Mod{
                     dx += 1;
                 }
             }
+
             if(build instanceof ItemStateHolder holder){
                 if(holder.inventory() == null){
                     return;
@@ -340,6 +394,8 @@ public class DelveMod extends Mod{
     @Override
     public void init() {
         super.init();
+
+        Vars.collisions = new DelveEntityCollisions();
 
         Vars.mods.getScripts().runConsole(
                 "function buildWorldP(){return Vars.world.buildWorld(Vars.player.x, Vars.player.y)}");

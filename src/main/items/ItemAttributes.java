@@ -58,5 +58,6 @@ public class ItemAttributes {
     stone = new ItemAttribute("stone"),
             iron = new ItemAttribute("iron"),
             copper = new ItemAttribute("copper"),
+            biochem = new ItemAttribute("biochem"),
             sekos = new ItemAttribute("sekos");
 }

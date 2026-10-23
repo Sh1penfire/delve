@@ -3,6 +3,8 @@ package main.blocks.environment;
 import arc.Graphics;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
+import arc.math.geom.Geometry;
+import arc.math.geom.Point2;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Stack;
 import arc.scene.ui.layout.Table;
@@ -38,14 +40,38 @@ import java.util.Random;
 
 public class ItemStatePile extends Block{
 
-    public static ItemStatePileBuild create(int x, int y, ItemState state){
-        Tile tile = Vars.world.tile(x, y);
-        tile.setBlock(DelveEnvBlocks.statePile);
-        tile.build.team = Vars.state.rules.defaultTeam;
-        var pile = (ItemStatePileBuild) tile.build;
-        pile.handleState(state);
+    private static final int searchRange = 8;
+    private static final Seq<Tile> searchQueue = new Seq<>(), searching = new Seq<>();
 
-        return (ItemStatePileBuild) tile.build;
+    private static Seq<Tile> targets;
+
+    //I was going to do a spatial hash but ill optimise when needed
+
+    //Dump items in the world, cannot dump overfill into anything but empty space or item piles
+    public static ItemStatePileBuild dump(int x, int y, ItemState state){
+
+        Tile tile = Vars.world.tile(x, y);
+
+        if(tile.block() == Blocks.air){
+            tile.setBlock(DelveEnvBlocks.statePile);
+            tile.build.team = Vars.state.rules.defaultTeam;
+            var pile = (ItemStatePileBuild) tile.build;
+            pile.handleState(state);
+
+            return (ItemStatePileBuild) tile.build;
+        }
+
+        boolean blocked = true;
+        if(tile.build instanceof ItemStatePileBuild pile){
+            blocked = !pile.acceptsItemState(state);
+            if(!blocked){
+                pile.handleState(state);
+                return pile;
+            }
+        }
+
+        //Return null if theres no space to dump
+        return null;
     }
 
     public ItemStatePile(String name) {

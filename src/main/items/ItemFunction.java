@@ -21,6 +21,9 @@ public abstract class ItemFunction {
             if(input.type.getBase() == DelveItems.stone){
                 output = ItemConstructors.get(DelveItems.stoneDust.name);
             }
+            if(input.type.getBase() == DelveItems.oldstone){
+                output = ItemConstructors.get(DelveItems.oldstoneDust.name);
+            }
             output.mass.setBase(input.mass.getModified(input.inventory));
             output.volume.setBase(input.volume.getModified(input.inventory));
 

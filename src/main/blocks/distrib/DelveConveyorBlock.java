@@ -90,7 +90,7 @@ public class DelveConveyorBlock extends Block {
                     highway.removeFront();
                     entry.itemState.parrent = null;
                     var offset = Geometry.d4(rotation);
-                    ItemStatePile.create(tile.x + offset.x, tile.y + offset.y, entry.itemState);
+                    ItemStatePile.dump(tile.x + offset.x, tile.y + offset.y, entry.itemState);
                 }
             });
         }

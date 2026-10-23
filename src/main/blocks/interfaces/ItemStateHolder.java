@@ -66,7 +66,6 @@ public interface ItemStateHolder {
     default void handleState(ItemState state){
         state.parrent = this;
         inventory().add(state);
-        return;
     };
 
 

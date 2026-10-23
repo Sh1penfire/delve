@@ -1,19 +1,28 @@
 package main.blocks.environment;
 
+import arc.Core;
 import arc.Graphics;
+import arc.audio.Sound;
 import arc.graphics.Color;
+import arc.graphics.g2d.Draw;
+import arc.graphics.g2d.TextureRegion;
+import arc.math.Interp;
+import arc.math.Mathf;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Table;
 import arc.struct.Bits;
 import arc.struct.ObjectMap;
-import arc.util.Scaling;
-import arc.util.Strings;
+import arc.struct.Seq;
+import arc.util.*;
+import arc.util.io.Reads;
 import main.content.DelveItems;
 import main.items.ItemConstructors;
 import main.items.ItemState;
 import mindustry.Vars;
+import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
+import mindustry.gen.Sounds;
 import mindustry.graphics.Pal;
 import mindustry.type.Category;
 import mindustry.type.Item;
@@ -46,20 +55,62 @@ public class OreBlock extends Block {
         }
     }
 
+    public static abstract class DropPool{
+        public abstract void get(Seq<ItemState> list);
+    };
+
+    public static class SingleItemPool extends DropPool{
+        public float mass = 1;
+
+        public Item item;
+
+
+        @Override
+        public void get(Seq<ItemState> list) {
+            var state = ItemConstructors.get(item.name);
+            //state.mass.setBase(state.mass.getModified() * mass);
+        }
+    }
+
+    public float flashDecay = 0.25f;
+    public float exponentialDecay = 0.92f;
+    public boolean mixCol = false;
+
+    public Sound hitSound = Sounds.rockBreak;
+
+    public TextureRegion[] crackRegions;
+    public String crackName = "delve-wall-cracks";
+    public int crackSprites = 4;
+
     public OreBlock(String name) {
         super(name);
         destructible = true;
+        update = true;
         breakable = false;
         targetable = false;
         solid = true;
         rebuildable = false;
-        forceDark = true;
+        forceDark = false;
+        drawCracks = false;
 
         buildVisibility = BuildVisibility.sandboxOnly;
         category = Category.effect;
 
+        drawCached = drawDynamic = true;
+
 
         allowDerelictRepair = false;
+        drawDisabled = false;
+        mixCol = true;
+    }
+
+    @Override
+    public void load() {
+        super.load();
+        crackRegions = new TextureRegion[crackSprites];
+        for (int i = 0; i < crackSprites; i++) {
+            crackRegions[i] = Core.atlas.find(name + "-cracks" + (i + 1), Core.atlas.find(crackName + (i + 1)));
+        }
     }
 
     @Override
@@ -97,6 +148,78 @@ public class OreBlock extends Block {
     public class OreBlockBuild extends Building implements BreakableWallBuilding{
         public ItemStack[] material;
 
+
+        TextureRegion baseRegion;
+        float rotOffset = 0;
+        float hitMag = 0;
+        int crackState = 0;
+
+        @Override
+        public void updateTile() {
+            super.updateTile();
+
+            if(enabled){
+                hitTime = Mathf.lerp(hitTime, hitTime * exponentialDecay, Time.delta);
+                hitTime = Mathf.maxZero(hitTime - flashDecay * Time.delta);
+
+                if(hitTime <= 0) enabled = false;
+            }
+        }
+
+        @Override
+        public void damage(float damage) {
+            super.damage(damage);
+            enabled = true;
+            hitTime += damage;
+            rotOffset = Mathf.random(-15, 15);
+            if(crackSprites > 0) {
+                int last = crackState;
+                crackState = Mathf.ceil((1 - healthf()) * crackSprites);
+                if(last != crackState) recache();
+            }
+            hitSound.at(x, y, 1 + hitTime/15);
+        }
+
+        public TextureRegion getRegion(){
+
+            if (parent().variants != 0 && parent().variantRegions != null) {
+                return parent().variantRegions[Mathf.randomSeed(tile.pos(), 0, Math.max(0, parent().variantRegions.length - 1))];
+            }
+            return parent().region;
+        }
+
+        public void draw() {
+            if(hitTime <= 0) return;
+            baseRegion = getRegion();
+            float flashProg = Mathf.maxZero(Mathf.log(15, hitTime + 1));
+
+            float sizeScale = (1 + flashProg * 0.15f);
+            float offsetRot = Mathf.lerp(drawrot(), rotOffset, flashProg);
+
+            //Mix with white all the way through, then start making it clear close to the end
+            float alphaProg = Mathf.maxZero(1 - flashProg * 3);
+
+            if(mixCol) Draw.mixcol(Tmp.c1.set(Color.white), flashProg);
+            Draw.alpha(1 - alphaProg);
+
+            Draw.rect(baseRegion, x, y, baseRegion.width * sizeScale/4, baseRegion.height * sizeScale/4, offsetRot);
+            Draw.mixcol();
+            Draw.color();
+
+            if(crackSprites > 0){
+                Draw.rect(crackRegions[crackState - 1], x, y, baseRegion.width * sizeScale/4, baseRegion.height * sizeScale/4, offsetRot);
+            }
+        }
+
+        public void drawCached() {
+            baseRegion = getRegion();
+            Draw.rect(baseRegion, this.x, this.y, this.drawrot());
+
+            if(crackSprites > 0 && crackState > 0){
+                Draw.rect(crackRegions[crackState - 1], x, y, baseRegion.width/4f, baseRegion.height/4f);
+            }
+        }
+
         @Override
         public boolean displayable() {
             return Vars.fogControl.isVisibleTile(Vars.player.team(), tile.x, tile.y) && Vars.world.getWallDarkness(tile) <= 1;
@@ -117,7 +240,7 @@ public class OreBlock extends Block {
             ItemState state = ItemConstructors.get(itemDropMap.get(parent(), DelveItems.stone).name);
             state.mass.setBase(5f);
 
-            var pile = ItemStatePile.create(tile.x, tile.y, state);
+            var pile = ItemStatePile.dump(tile.x, tile.y, state);
         }
 
         @Override
