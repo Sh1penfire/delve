@@ -15,13 +15,13 @@ public abstract class ItemFunction {
         public ItemState process(ItemState input) {
             ItemState output = input;
 
-            if(input.type.getBase() == DelveItems.malachite){
+            if(input.type.getModified(input.inventory) == DelveItems.malachite){
                 output = ItemConstructors.get(DelveItems.azuritePowder.name);
             }
-            if(input.type.getBase() == DelveItems.stone){
+            if(input.type.getModified(input.inventory) == DelveItems.stone){
                 output = ItemConstructors.get(DelveItems.stoneDust.name);
             }
-            if(input.type.getBase() == DelveItems.oldstone){
+            if(input.type.getModified(input.inventory) == DelveItems.oldstone){
                 output = ItemConstructors.get(DelveItems.oldstoneDust.name);
             }
             output.mass.setBase(input.mass.getModified(input.inventory));

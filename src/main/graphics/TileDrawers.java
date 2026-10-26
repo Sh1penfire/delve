@@ -14,14 +14,20 @@ public class TileDrawers {
 
     public static void drawField(float x, float y, float radius){
         Draw.color(Pal.heal);
-        Draw.alpha(0.4f);
+        float offset =  x/4f + y;
+        offset/=Vars.tilesize;
+        Draw.alpha(((0.5f + 0.5f * Mathf.sin(Time.time/60f + offset, 1, 1)) * 0.3f));
+
         Fill.square(x, y, radius);
         Draw.reset();
     }
 
     public static void drawFieldEdge(float x, float y, float radius){
-        Draw.color(Pal.gray);
-        Draw.alpha(0.4f);
+        Draw.color(Pal.heal);
+        float offset =  x/4f + y;
+        offset/=Vars.tilesize;
+        Draw.alpha((0.5f + 0.5f * Mathf.sin(Time.time/60f + offset, 1, 1)) * 0.5f + 0.25f);
+
         Fill.square(x, y, radius);
         Draw.reset();
     }

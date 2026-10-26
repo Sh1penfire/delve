@@ -6,7 +6,6 @@ import arc.audio.Sound;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
-import arc.math.Interp;
 import arc.math.Mathf;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Table;
@@ -14,12 +13,14 @@ import arc.struct.Bits;
 import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.*;
-import arc.util.io.Reads;
 import main.content.DelveItems;
+import main.data.lootables.AttributeDropTableBase;
+import main.data.lootables.AttributeDropTableBase.AtributeDropTable;
+import main.items.ItemAttributes;
+import main.items.ItemAttributes.AttributeData;
 import main.items.ItemConstructors;
 import main.items.ItemState;
 import mindustry.Vars;
-import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
 import mindustry.gen.Sounds;
@@ -37,7 +38,7 @@ import mindustry.world.modules.ItemModule;
 
 import java.util.Iterator;
 
-public class OreBlock extends Block {
+public class DelveOreBlock extends Block {
 
     public static ModTile tmpTile = new ModTile(-1, -1);
 
@@ -55,22 +56,101 @@ public class OreBlock extends Block {
         }
     }
 
-    public static abstract class DropPool{
-        public abstract void get(Seq<ItemState> list);
-    };
+    public static AtributeDropTable defaultDroptable = new AtributeDropTable(){{
+        mainEntry = new AttributeDropTableBase.TableDropEntry(){{
 
-    public static class SingleItemPool extends DropPool{
-        public float mass = 1;
+            entries.addAll(
+                    new TableDropEntry(){{
+                        baseline = new AttributeData().put(ItemAttributes.iron, 10).put( ItemAttributes.stone, 10);
 
-        public Item item;
+                        prefs.add(new MinCostPref(){{
+                            cost.set(baseline);
+                        }});
 
+                        entries.addAll(
+                                new ItemDropEntry(){{
+                                    type = DelveItems.geothite;
 
-        @Override
-        public void get(Seq<ItemState> list) {
-            var state = ItemConstructors.get(item.name);
-            //state.mass.setBase(state.mass.getModified() * mass);
-        }
-    }
+                                    prefs.add(new MinCostPref(){{
+                                        cost.put(ItemAttributes.iron, 4).put( ItemAttributes.stone, 4);
+                                    }});
+                                    cost.put(ItemAttributes.iron, 1).put( ItemAttributes.stone, 1);
+                                    minCostScale = 3;
+                                    maxCostScale = 4;
+                                }},
+                                new ItemDropEntry(){{
+
+                                    type = DelveItems.concertumDust;
+
+                                    cost.put(ItemAttributes.iron, 1).put(ItemAttributes.stone, 1);
+                                    minCostScale = 1;
+                                    maxCostScale = 3;
+                                }}
+                        );
+                    }},
+                    new TableDropEntry(){{
+                        prefs.add(new AboveZeroPref(ItemAttributes.stone));
+
+                        entries.addAll(
+                                new ItemDropEntry(){{
+                                    type = DelveItems.stone;
+
+                                    prefs.add(new MinCostPref(){{
+                                        cost.put( ItemAttributes.stone, 8);
+                                    }});
+                                    cost.put( ItemAttributes.stone, 1);
+                                    minCostScale = 8;
+                                    maxCostScale = 12;
+                                }},
+                                new ItemDropEntry(){{
+                                    type = DelveItems.stone;
+
+                                    prefs.add(new MinCostPref(){{
+                                        cost.put( ItemAttributes.stone, 4);
+                                    }});
+                                    cost.put(ItemAttributes.stone, 1);
+                                    minCostScale = 4;
+                                    maxCostScale = 5;
+                                }},
+                                new ItemDropEntry(){{
+                                    type = DelveItems.stoneDust;
+
+                                    cost.put(ItemAttributes.stone, 1);
+                                    minCostScale = 1;
+                                    maxCostScale = 3;
+                                }}
+                        );
+                    }},
+                    new TableDropEntry(){{
+                        prefs.add(new AboveZeroPref(ItemAttributes.iron));
+
+                        entries.addAll(
+                                new ItemDropEntry(){{
+                                    type = DelveItems.rust;
+
+                                    prefs.add(new MinCostPref(){{
+                                        cost.put(ItemAttributes.iron, 4);
+                                    }});
+                                    cost.put(ItemAttributes.iron, 1);
+                                    minCostScale = 3;
+                                    maxCostScale = 4;
+                                }},
+                                new ItemDropEntry(){{
+
+                                    type = DelveItems.rustDust;
+
+                                    cost.put(ItemAttributes.iron, 1);
+                                    minCostScale = 1;
+                                    maxCostScale = 3;
+                                }}
+                        );
+                    }}
+            );
+        }};
+    }};
+
+    public AtributeDropTable dropTable = defaultDroptable;
+    public AttributeData dropAttributes = new AttributeData();
 
     public float flashDecay = 0.25f;
     public float exponentialDecay = 0.92f;
@@ -82,7 +162,7 @@ public class OreBlock extends Block {
     public String crackName = "delve-wall-cracks";
     public int crackSprites = 4;
 
-    public OreBlock(String name) {
+    public DelveOreBlock(String name) {
         super(name);
         destructible = true;
         update = true;
@@ -237,10 +317,15 @@ public class OreBlock extends Block {
         @Override
         public void killed() {
             super.killed();
-            ItemState state = ItemConstructors.get(itemDropMap.get(parent(), DelveItems.stone).name);
-            state.mass.setBase(5f);
+            Seq<ItemState> stateList = new Seq<>();
 
-            var pile = ItemStatePile.dump(tile.x, tile.y, state);
+            dropTable.get(stateList, dropAttributes, 20);
+            Mathf.rand.setSeed(AttributeDropTableBase.rand.seed0);
+            stateList.shuffle();
+
+            for(ItemState state: stateList){
+                var pile = ItemStatePile.dump(tile.x, tile.y, state);
+            }
         }
 
         @Override

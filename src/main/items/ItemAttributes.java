@@ -32,6 +32,20 @@ public class ItemAttributes {
     public static class AttributeData{
         public ObjectFloatMap<String> map = new ObjectFloatMap<>();
 
+        public void each(AttributeEntry cons){
+            map.each(entry -> {
+                cons.get(entry.key, entry.value);
+            });
+        }
+
+        public float get(ItemAttribute attr, float defaultVal){
+            return map.get(attr.name, defaultVal);
+        }
+
+        public float getValue(String id, float defaultVal){
+            return map.get(id, defaultVal);
+        }
+
         public void set(AttributeData data){
             map.set(data.map);
         }
@@ -40,6 +54,28 @@ public class ItemAttributes {
             map.put(attribute.name, amount);
             return this;
         };
+
+        public AttributeData add(ItemAttribute attribute, float amount){
+            map.put(attribute.name, map.get(attribute.name, 0) + amount);
+            return this;
+        };
+
+        //Add another attribute data onto this
+        public AttributeData addData(AttributeData other, float scale){
+            other.each((attrId, amount) -> {
+                map.put(attrId, map.get(attrId, 0) + amount * scale);
+            });
+            return this;
+        };
+
+        public AttributeData mul(ItemAttribute attribute, float amount){
+            map.put(attribute.name, map.get(attribute.name, 0) * amount);
+            return this;
+        };
+    }
+
+    public interface AttributeEntry{
+        void get(String id, float value);
     }
 
     public static class ItemAttribute{

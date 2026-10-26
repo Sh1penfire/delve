@@ -138,7 +138,7 @@ public class ItemStatePile extends Block{
             ItemStateHolder.super.handleState(state);
             state.x = x;
             state.y = y;
-            Log.info("Adding state!");
+            Fx.pulverize.at(x, y);
         }
 
         @Override

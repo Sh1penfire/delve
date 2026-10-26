@@ -13,11 +13,11 @@ public class DelvePowerBlocks {
 
     public static void load(){
         node = new EnergyFieldNode("collector"){{
-            requirements(Category.power, ItemStack.with(DelveItems.crystalisedCopper, 5));
-            size = 1;
-            maxNodes = 8;
-            laserRange = 6;
-            fieldRange = 4;
+            requirements(Category.power, ItemStack.with(DelveItems.crystalisedCopper, 50));
+            size = 3;
+            maxNodes = 20;
+            laserRange = 4;
+            fieldRange = 10;
         }};
 
         relay = new PowerNode("relay"){{

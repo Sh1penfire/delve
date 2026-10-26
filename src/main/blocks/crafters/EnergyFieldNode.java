@@ -4,6 +4,7 @@ import arc.Core;
 import arc.graphics.Blending;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
+import arc.graphics.gl.Shader;
 import arc.math.Angles;
 import arc.math.Mathf;
 import arc.math.geom.Geometry;
@@ -19,6 +20,7 @@ import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Icon;
 import mindustry.graphics.Layer;
+import mindustry.graphics.Shaders;
 import mindustry.world.Tile;
 import mindustry.world.blocks.power.PowerNode;
 
@@ -111,7 +113,6 @@ public class EnergyFieldNode extends PowerNode {
             drawTimestamp = Time.globalTime;
 
             Draw.z(Layer.blockUnder);
-
             for (int tx = 0; tx < Vars.world.width(); tx++) {
                 for (int ty = 0; ty < Vars.world.height(); ty++) {
                     if(EnergyField.coverage[tx][ty] == 0) continue;

@@ -87,7 +87,7 @@ public class DelvePlayerUnits {
             fogRadius = 2;
             mechSideSway = mechFrontSway = 0;
 
-            hitSize = 20;
+            hitSize = 5;
             treadPullOffset = 3;
             speed = 0.75f;
             health = 850;
@@ -142,7 +142,7 @@ public class DelvePlayerUnits {
                 //pullStrength = 0.2f;
                 pullStrength = 0;
 
-                bullet = new BasicBulletType(4f, 30/60f){{
+                bullet = new BasicBulletType(4f, 5){{
                     sprite = "missile-large";
 
                     shootEffect = Fx.shootBig;

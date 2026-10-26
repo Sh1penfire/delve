@@ -32,9 +32,6 @@ public class EnergyField {
         if(initialised) {
             update(circle);
         }
-        else {
-            Log.info("Adding circle before initialisation!");
-        }
     }
 
     public static void update(FieldCircle circle){

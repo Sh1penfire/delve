@@ -11,7 +11,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Time;
 import main.blocks.environment.DefaultOreBlock;
 import main.blocks.environment.ItemPile;
-import main.blocks.environment.OreBlock;
 import main.content.blocks.DelveEnvBlocks;
 import mindustry.Vars;
 import mindustry.core.World;

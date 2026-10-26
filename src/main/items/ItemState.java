@@ -30,30 +30,19 @@ public class ItemState implements Cloneable{
     public Inventory inventory;
 
     /**
-     * Size on conveyor belts/inventories decided dynamically based on weight
-     */
-
-    public InventoryModifyable<Float> size = new InventoryModifyable<>(1f);
-
-    /**
-     * Current mass of the item. Measured in "u" for unit.
+     * Current mass of the item, which attributes scale off of. Measured in "mu" for mass unit.
      */
 
     public InventoryModifyable<Float> mass = new InventoryModifyable<>(1f);
-    /**
-     * Base mass of the item which attributes scale off of. Measured in "u" for unit. Used to scale attributes relative to mass/baseMass
-     */
-
-    public InventoryModifyable<Float> baseMass = new InventoryModifyable<>(1f);
 
     /**
-     * How much physical space an item takes up. Measured in v
+     * How much physical space an item takes up. Measured in "vu" for volume unit
      * Used instead of stack size to determine how much of an item should fit in a container
      */
     public InventoryModifyable<Float> volume = new InventoryModifyable<>(1f);
 
     /**
-    *Whether this item can combine with the same type
+    *Whether this item is allowed to combine with the same type of item
      */
     public InventoryModifyable<Boolean> discrete = new InventoryModifyable<>(true);
 
@@ -67,9 +56,10 @@ public class ItemState implements Cloneable{
     //Used to understand the composition of an item
     public ItemAttributes.AttributeData attributes;
 
-    public ItemState(Item item, float defaultSize) {
+    public ItemState(Item item) {
         type = new InventoryModifyable<>(item);
-        size.setBase(defaultSize);
+        volume.setBase(1f);
+        mass.setBase(1f);
     }
 
     public ItemState(){}
@@ -124,7 +114,7 @@ public class ItemState implements Cloneable{
         type.setBase(TypeIO.readItem(read));
         x = read.f();
         y = read.f();
-        size.setBase(read.f());
+        volume.setBase(read.f());
         boolean customData = read.bool();
 
         if(customData){
@@ -142,7 +132,7 @@ public class ItemState implements Cloneable{
         TypeIO.writeItem(write, type.getBase());
         write.f(x);
         write.f(y);
-        write.f(size.getBase());
+        write.f(volume.getBase());
 
         write.bool(data != null);
         if(data != null) {
@@ -167,9 +157,7 @@ public class ItemState implements Cloneable{
     protected ItemState clone() throws CloneNotSupportedException {
         ItemState state = (ItemState) super.clone();
         state.type = new InventoryModifyable<>(type.getBase());
-        state.size = new InventoryModifyable<>(size.getBase());
         state.mass = new InventoryModifyable<>(mass.getBase());
-        state.baseMass = new InventoryModifyable<>(baseMass.getBase());
         state.volume = new InventoryModifyable<>(volume.getBase());
         state.discrete = new InventoryModifyable<>(discrete.getBase());
         if(data != null) {

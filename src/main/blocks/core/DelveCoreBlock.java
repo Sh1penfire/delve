@@ -59,7 +59,7 @@ public class DelveCoreBlock extends CoreBlock {
 
         @Override
         public void handleState(ItemState state) {
-            float multiplier = state.mass.getModified(state.inventory)/state.baseMass.getModified(state.inventory);
+            float multiplier = state.mass.getModified(state.inventory);
 
             if(state.attributes != null) state.attributes.map.each(entry -> {
                 Item item = ItemAttributes.pureMap.get(entry.key);

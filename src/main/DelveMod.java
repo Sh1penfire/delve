@@ -122,10 +122,9 @@ public class DelveMod extends Mod{
                 Vars.player.unit().apply(StatusEffects.disarmed, 5);
                 if(Core.input.keyTap(KeyCode.mouseLeft) || Core.input.keyDown(KeyCode.mouseLeft) && Core.input.keyDown(KeyCode.controlLeft)){
                     Building build = Vars.world.buildWorld(Core.input.mouseWorldX(), Core.input.mouseWorldY());
-                    Log.info("Clicked @!", build);
                     if(build instanceof ItemStateHolder holder && holder.inventory() != null && Vars.player.unit() instanceof ItemStateHolder inventoryling){
-                        Log.info("trying to transfer!");
                         if(Vars.player.unit().dst(build) <= interactionRadius) {
+                            if(holder.topState() == null) return;
                             if (inventoryling.acceptsItemState(holder.topState()))
                                 ItemStateHolder.handleTransfer(holder, holder.topState(), inventoryling);
                         }
@@ -349,7 +348,9 @@ public class DelveMod extends Mod{
                         dy -= 3;
                         dx += 1;
                     });
-                    Drawf.text(state.volume.getBase().toString(), dx, dy, Color.magenta);
+                    Drawf.text(state.volume.getBase().toString() + "vu", dx, dy, Color.magenta);
+                    dy -= 3;
+                    dx += 1;
                 });
             }
         });
@@ -370,11 +371,10 @@ public class DelveMod extends Mod{
         DelveDistribBlocks.load();
 
         VanillaCostModifier.load();
-
-        Log.info("FUCK YOU EGGMAN IM GOING TO COUNTER-PISS ON THE MOOOOOOOOOOON");
         //I touched intelij today :D
     }
 
+    //TODO: add modifiers onto the item type
     public static void modify1(){
         Modifyable.Modifier<World, Float> sizeModifier = new Modifyable.Modifier<World, Float>() {
             @Override
@@ -387,7 +387,6 @@ public class DelveMod extends Mod{
                 return in * 2;
             }
         };
-        DelveItems.malachite.entry.size.addModifier(sizeModifier);
 
     }
 
@@ -406,6 +405,7 @@ public class DelveMod extends Mod{
         Seq<String> packages = Seq.with(
                 "main",
                 "main.blocks",
+                "main.blocks.environment",
                 "main.blocks.debug",
                 "main.blocks.interfaces",
                 "main.content",

@@ -86,7 +86,7 @@ public class HaulerUnit extends MechUnit implements ItemStateHolder, CollisionCo
     public void updateStatePositions(){
         totalOffset = hitSize;
         inventory.each(entry -> {
-            totalOffset += entry.size.getModified(inventory);
+            totalOffset += entry.volume.getModified(inventory);
             Tmp.v1.trns(rotation, totalOffset).add(x, y);
             entry.x = Tmp.v1.x;
             entry.y = Tmp.v1.y;
@@ -491,7 +491,7 @@ public class HaulerUnit extends MechUnit implements ItemStateHolder, CollisionCo
         float dx = x, dy = y - Vars.tilesize * 2.5f;
 
 
-        Drawf.text(Strings.format("@/@", inventory.size, inventory.capacity), dx, dy, Color.white);
+        Drawf.text(Strings.format("@/@ vu", inventory.size, inventory.capacity), dx, dy, Color.white);
         dy -= Vars.tilesize/2f;
         float width = 8;
 

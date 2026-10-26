@@ -4,7 +4,6 @@ import arc.graphics.Color;
 import main.items.types.AttributeItem;
 import main.items.types.DelveItem;
 import main.items.types.SpoilageItem;
-import main.items.types.TurretItem;
 import main.meta.MeldStats;
 import main.items.ItemAttributes;
 import mindustry.Vars;
@@ -15,11 +14,9 @@ public class DelveItems {
 
     public static DelveItem stone, rust, geothite, malachite, azuritePowder, shadesteel, progenate, oldstone;
 
-    public static DelveItem stoneDust, oldstoneDust;
+    public static DelveItem stoneDust, oldstoneDust, rustDust, concertumDust;
 
     public static DelveItem bionorb;
-
-    public static TurretItem duonium;
 
     public static Item[] propulites;
 
@@ -34,15 +31,12 @@ public class DelveItems {
         bionorb = new SpoilageItem("bionorb"){{
             ItemAttributes.register(this).put(ItemAttributes.biochem, 1);
             ItemAttributes.pureMap.put(ItemAttributes.biochem.name, this);
-            size = 8;
         }};
 
         //Basic items
         stone = new DelveItem("rubble", Color.gray){{
             ItemAttributes.register(this).
-                    put(ItemAttributes.stone, 12);
-            size = 16;
-            volume = 12;
+                    put(ItemAttributes.stone, 1);
         }};
 
         oldstone = new DelveItem("oldstone", Color.valueOf("9d755d")){{
@@ -53,13 +47,13 @@ public class DelveItems {
 
         rust = new DelveItem("rust", Color.valueOf("9d755d")){{
             ItemAttributes.register(this).
-                    put(ItemAttributes.iron, 3);
+                    put(ItemAttributes.iron, 1);
         }};
 
         geothite = new DelveItem("concertum", Color.valueOf("9d755d")){{
             ItemAttributes.register(this).
-                    put(ItemAttributes.stone, 2).
-                    put(ItemAttributes.iron, 5);
+                    put(ItemAttributes.stone, 1).
+                    put(ItemAttributes.iron, 1);
 
         }};
 
@@ -86,7 +80,6 @@ public class DelveItems {
             };
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 1);
-            size = 0.5f;
 
             discrete = false;
         }};
@@ -97,7 +90,18 @@ public class DelveItems {
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 0.5f)
                     .put(ItemAttributes.iron, 0.25f);
-            size = 2;
+
+            discrete = false;
+        }};
+
+        rustDust = new DelveItem("rust-dust", Color.gray){{
+            ItemAttributes.register(this).put(ItemAttributes.iron, 1);
+
+            discrete = false;
+        }};
+
+        concertumDust = new DelveItem("concertum-dust", Color.gray){{
+            ItemAttributes.register(this).put(ItemAttributes.iron, 1).put(ItemAttributes.stone, 1);
 
             discrete = false;
         }};
@@ -110,11 +114,6 @@ public class DelveItems {
         progenate = new DelveItem("procrium", Color.valueOf("9d755d")){{
 
         }};
-
-        duonium = new TurretItem("duonium"){{
-            size = 8;
-        }};
-
 
         Vars.content.items().each(i -> {
             if(ItemAttributes.get(i) != null) MeldStats.itemAttributes(i, i.stats);

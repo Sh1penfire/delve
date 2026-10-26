@@ -212,7 +212,7 @@ public class DelveGrabberBlock extends Block {
                             ItemState state = hand.targ.topState();
                             hand.grabbed.add(state);
                             hand.targ.removeState(state);
-                            hand.capacity += state.size.getBase();
+                            hand.capacity += state.volume.getBase();
                         }
                         currentTeamMap.remove(hand.targ.tile);
                         hand.targ = null;

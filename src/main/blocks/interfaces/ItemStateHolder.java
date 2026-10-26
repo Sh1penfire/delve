@@ -27,7 +27,6 @@ public interface ItemStateHolder {
     static float handleTransfer(ItemStateHolder parent, ItemState state, ItemStateHolder target){
 
         float room = target.inventory().roomFor(state);
-        Log.info("Room: @, State volume: @", room, state.volume.getModified(state.inventory));
 
         if(room >= state.volume.getModified(state.inventory)){
             parent.removeState(state);

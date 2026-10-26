@@ -45,7 +45,7 @@ public class DelveConveyorBlock extends Block {
 
         @Override
         public boolean acceptsItemState(ItemState state) {
-            return node.toHighway != null && state != null && state.size.getModified(state.inventory) <= node.toHighway.startGap;
+            return node.toHighway != null && state != null && state.volume.getModified(state.inventory) <= node.toHighway.startGap;
         }
 
         @Override
@@ -144,7 +144,7 @@ public class DelveConveyorBlock extends Block {
 
         @Override
         public boolean acceptItem(Building source, Item item) {
-            return node.toHighway != null && (item instanceof DelveItem delvie ? delvie.entry.size.getModified(Vars.world) : DelveItem.defaultSize) <= node.toHighway.startGap;
+            return node.toHighway != null && DelveItem.defaultSize <= node.toHighway.startGap;
         }
 
         @Override
@@ -167,7 +167,6 @@ public class DelveConveyorBlock extends Block {
         public void onProximityUpdate() {
             if(lastRot != rotation){
                 lastRot = rotation;
-                Log.info("rotated");
             }
             super.onProximityUpdate();
             updateGraph();
