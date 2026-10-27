@@ -20,6 +20,8 @@ import main.blocks.EnergyField;
 import main.blocks.debug.LightWallBlock;
 import main.blocks.debug.LightWallBlock.LightPoint;
 import main.blocks.distrib.DelveConveyorBlock;
+import main.blocks.environment.ItemPile;
+import main.blocks.environment.ItemStatePile;
 import main.blocks.info.Lidar;
 import main.blocks.interfaces.ItemStateHolder;
 import main.content.DelveAspects;
@@ -31,6 +33,7 @@ import main.data.Modifyable;
 import main.entities.units.DelveEntityCollisions;
 import main.graphics.TileDrawers;
 import main.graphs.ConveyorGraph;
+import main.items.ItemAttributes;
 import main.items.ItemConstructors;
 import main.items.ItemState;
 import main.math.Raycasting;
@@ -49,7 +52,9 @@ import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.mod.*;
+import mindustry.type.ItemStack;
 import mindustry.world.Tile;
+import mindustry.world.blocks.ConstructBlock;
 import mindustry.world.blocks.storage.CoreBlock;
 import rhino.ImporterTopLevel;
 import rhino.NativeJavaPackage;
@@ -109,6 +114,28 @@ public class DelveMod extends Mod{
 
     @Override
     public void loadContent(){
+
+        Events.on(EventType.BlockBuildEndEvent.class, e -> {
+            if(!e.breaking) return;
+
+            final var build = e.tile.build;
+
+            if(!(build instanceof ConstructBlock.ConstructBuild con)) return;
+
+            var requirements = con.current.requirements;
+
+            final ItemAttributes.AttributeData data = new ItemAttributes.AttributeData();
+
+            for(ItemStack stack: requirements){
+                data.addData(ItemAttributes.get(stack.item), stack.amount);
+            }
+
+            ItemAttributes.pureMap.each((id, item) -> {
+                float amount = data.idGet(id, 0);
+                if(amount == 0) return;
+                ItemStatePile.dump(e.tile.x, e.tile.y, ItemConstructors.get(item.name, ItemConstructors.defaultData, amount));
+            });
+        });
 
         Events.run(EventType.Trigger.update, () -> {
             if(!Vars.state.isPlaying()) return;

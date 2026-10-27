@@ -3,7 +3,6 @@ package main.data.lootables;
 import arc.math.Mathf;
 import arc.math.Rand;
 import arc.struct.Seq;
-import arc.util.Log;
 import main.items.ItemAttributes;
 import main.items.ItemConstructors;
 import main.items.ItemState;
@@ -40,7 +39,7 @@ public abstract class AttributeDropTableBase {
         }
     }
 
-    public abstract class DropEntry{
+    public static abstract class DropEntry{
 
         //Weight of this pool. Used for random chosing.
         public int weight;
@@ -63,7 +62,7 @@ public abstract class AttributeDropTableBase {
 
 
     //Checks its entries in order of index
-    public class TableDropEntry extends DropEntry{
+    public static class TableDropEntry extends DropEntry{
 
         public Seq<DropEntry> entries = new Seq<>();
 
@@ -87,7 +86,7 @@ public abstract class AttributeDropTableBase {
     }
 
     //Creates item states
-    public class ItemDropEntry extends DropEntry{
+    public static class ItemDropEntry extends DropEntry{
 
         //The cost for this item entry
         public ItemAttributes.AttributeData cost = new ItemAttributes.AttributeData();
@@ -105,7 +104,7 @@ public abstract class AttributeDropTableBase {
         public boolean get(Seq<ItemState> items, ItemAttributes.AttributeData curAttributes) {
             maxScaling = maxCostScale;
             cost.each((attrId, amount) -> {
-                maxScaling = Math.min(curAttributes.getValue(attrId, 1)/amount, maxScaling);
+                maxScaling = Math.min(curAttributes.idGet(attrId, 1)/amount, maxScaling);
             });
 
             if(maxScaling < minCostScale) return false;
@@ -123,12 +122,12 @@ public abstract class AttributeDropTableBase {
     }
 
 
-    public abstract class CostPref{
+    public static abstract class CostPref{
         public abstract boolean valid(Seq<ItemState> items, ItemAttributes.AttributeData data);
     }
 
     //Check if the data is above a certain required cost to activate
-    public class MinCostPref extends CostPref{
+    public static class MinCostPref extends CostPref{
 
         public MinCostPref(){
         }
@@ -146,7 +145,7 @@ public abstract class AttributeDropTableBase {
 
             cost.each((attrId, amount) -> {
 
-                if(foundInvalid || curAttributes.getValue(attrId, 0) < amount) {
+                if(foundInvalid || curAttributes.idGet(attrId, 0) < amount) {
                     foundInvalid = true;
                 }
             });
@@ -154,7 +153,7 @@ public abstract class AttributeDropTableBase {
         }
     }
     //Check if the data is above a certain required cost to activate
-    public class AboveZeroPref extends CostPref{
+    public static class AboveZeroPref extends CostPref{
 
 
         public AboveZeroPref(ItemAttributes.ItemAttribute attribute){

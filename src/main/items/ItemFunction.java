@@ -16,7 +16,10 @@ public abstract class ItemFunction {
             ItemState output = input;
 
             if(input.type.getModified(input.inventory) == DelveItems.malachite){
-                output = ItemConstructors.get(DelveItems.azuritePowder.name);
+                output = ItemConstructors.get(DelveItems.sekos.name);
+            }
+            if(input.type.getModified(input.inventory) == DelveItems.geothite){
+                output = ItemConstructors.get(DelveItems.geothiteDust.name);
             }
             if(input.type.getModified(input.inventory) == DelveItems.stone){
                 output = ItemConstructors.get(DelveItems.stoneDust.name);

@@ -89,7 +89,7 @@ public class DelvePlayerUnits {
 
             hitSize = 5;
             treadPullOffset = 3;
-            speed = 0.75f;
+            speed = 1.25f;
             health = 850;
             armor = 6f;
             itemCapacity = 50;

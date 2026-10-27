@@ -42,7 +42,7 @@ public class ItemAttributes {
             return map.get(attr.name, defaultVal);
         }
 
-        public float getValue(String id, float defaultVal){
+        public float idGet(String id, float defaultVal){
             return map.get(id, defaultVal);
         }
 
@@ -55,8 +55,18 @@ public class ItemAttributes {
             return this;
         };
 
+        public AttributeData idPut(String attributeId, float amount){
+            map.put(attributeId, amount);
+            return this;
+        };
+
         public AttributeData add(ItemAttribute attribute, float amount){
             map.put(attribute.name, map.get(attribute.name, 0) + amount);
+            return this;
+        };
+
+        public AttributeData idAdd(String attribute, float amount){
+            map.put(attribute, map.get(attribute, 0) + amount);
             return this;
         };
 
@@ -91,9 +101,11 @@ public class ItemAttributes {
     }
 
     public static ItemAttribute
-    stone = new ItemAttribute("stone"),
-            iron = new ItemAttribute("iron"),
-            copper = new ItemAttribute("copper"),
-            biochem = new ItemAttribute("biochem"),
-            sekos = new ItemAttribute("sekos");
+
+        stone = new ItemAttribute("stone"),
+        iron = new ItemAttribute("iron"),
+        copper = new ItemAttribute("copper"),
+        biochem = new ItemAttribute("biochem"),
+        sekos = new ItemAttribute("sekos"),
+        ice = new ItemAttribute("ice");
 }

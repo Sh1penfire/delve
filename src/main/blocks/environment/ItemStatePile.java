@@ -28,6 +28,7 @@ import mindustry.gen.Bullet;
 import mindustry.graphics.Layer;
 import mindustry.type.Category;
 import mindustry.type.Item;
+import mindustry.type.ItemStack;
 import mindustry.type.Liquid;
 import mindustry.world.Block;
 import mindustry.world.Tile;
@@ -47,11 +48,33 @@ public class ItemStatePile extends Block{
 
     //I was going to do a spatial hash but ill optimise when needed
 
+    public static boolean validDump(Tile t, ItemState stack){
+        return t != null && (t.block() == Blocks.air || (t.build instanceof ItemStatePile.ItemStatePileBuild pile && pile.acceptsItemState(stack)));
+    }
+
+    static boolean validFound;
+
     //Dump items in the world, cannot dump overfill into anything but empty space or item piles
     public static ItemStatePileBuild dump(int x, int y, ItemState state){
 
         Tile tile = Vars.world.tile(x, y);
 
+        validFound = validDump(tile, state);
+
+        if(!validFound){
+            for(int i = 0; i < Geometry.d4.length; i++){
+                Point2 offset = Geometry.d4(i);
+                tile = Vars.world.tile(x + offset.x, y + offset.y);
+                validFound = validDump(tile, state);
+
+                if(validFound) break;
+            }
+        }
+
+        //If theres no space to dump anywhere, return null
+        if(!validFound) return null;
+
+        //Case where the valid tile is air
         if(tile.block() == Blocks.air){
             tile.setBlock(DelveEnvBlocks.statePile);
             tile.build.team = Vars.state.rules.defaultTeam;
@@ -62,6 +85,7 @@ public class ItemStatePile extends Block{
         }
 
         boolean blocked = true;
+        //Case where the tile is host to an item pile
         if(tile.build instanceof ItemStatePileBuild pile){
             blocked = !pile.acceptsItemState(state);
             if(!blocked){
@@ -70,7 +94,7 @@ public class ItemStatePile extends Block{
             }
         }
 
-        //Return null if theres no space to dump
+        //Not sure how we got here... return null
         return null;
     }
 

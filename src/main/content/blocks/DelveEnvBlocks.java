@@ -5,6 +5,7 @@ import main.blocks.environment.ItemPile;
 import main.blocks.environment.ItemStatePile;
 import main.blocks.environment.DelveOreBlock;
 import main.content.DelveItems;
+import main.data.lootables.DelveDropTables;
 import main.items.ItemAttributes;
 import mindustry.gen.Sounds;
 import mindustry.world.blocks.environment.Floor;
@@ -29,37 +30,89 @@ public class DelveEnvBlocks {
 
         concertumDeposit = new DelveOreBlock("concertum-deposit"){{
             variants = 3;
-            health = 120;
+            health = 60;
 
-            dropAttributes.put(ItemAttributes.stone, 50).put(ItemAttributes.iron, 20);
+            tileLayers.addAll(
+                    new TileLayer(health,
+                            DelveDropTables.defaultDroptable,
+                            new ItemAttributes.AttributeData().put(ItemAttributes.stone, 5).put(ItemAttributes.iron, 20)),
+                    new TileLayer(health * 40,
+                            DelveDropTables.defaultDroptable,
+                            new ItemAttributes.AttributeData().put(ItemAttributes.stone, 100).put(ItemAttributes.iron, 40)){{
+                        armor = 5;
+                    }},
+                    new TileLayer(health * 40,
+                            DelveDropTables.defaultDroptable,
+                            new ItemAttributes.AttributeData().put(ItemAttributes.stone, 100).put(ItemAttributes.iron, 40)){{
+                        armor = 10;
+                    }}
+            );
         }};
 
         placeriteDeposit = new DelveOreBlock("placithite-deposit"){{
             variants = 2;
-            health = 60;
+            health = 30;
+
+            tileLayers.addAll(
+                    new TileLayer(health,
+                            DelveDropTables.defaultDroptable,
+                            new ItemAttributes.AttributeData().put(ItemAttributes.stone, 5).put(ItemAttributes.copper, 20)),
+                    new TileLayer(health * 40,
+                            DelveDropTables.defaultDroptable,
+                            new ItemAttributes.AttributeData().put(ItemAttributes.stone, 100).put(ItemAttributes.copper, 40)){{
+                        armor = 5;
+                    }},
+                    new TileLayer(health * 40,
+                            DelveDropTables.defaultDroptable,
+                            new ItemAttributes.AttributeData().put(ItemAttributes.stone, 100).put(ItemAttributes.copper, 40)){{
+                        armor = 10;
+                    }}
+            );
         }};
 
         concertumCluster = new DelveOreBlock("concertum-cluster"){{
             variants = 2;
             health = 120;
+
+            tileLayers.add(
+                    new TileLayer(health * 5,
+                            DelveDropTables.defaultDroptable,
+                            new ItemAttributes.AttributeData().put(ItemAttributes.stone, 50).put(ItemAttributes.iron, 40)){{
+                                armor = 1;
+                    }}
+            );
         }};
 
         placithiteCluster = new DelveOreBlock("placithite-cluster"){{
             variants = 2;
             health = 60;
+
+            tileLayers.add(
+                    new TileLayer(health * 5,
+                            DelveDropTables.defaultDroptable,
+                            new ItemAttributes.AttributeData().put(ItemAttributes.stone, 50).put(ItemAttributes.copper, 40)){{
+                        armor = 1;
+                    }}
+            );
         }};
 
         graystone = new DelveOreBlock("graystone-wall"){{
             variants = 0;
             health = 300;
 
-            dropAttributes.put(ItemAttributes.stone, 20);
+            tileLayers.add(
+                    new TileLayer(health, DelveDropTables.defaultDroptable, new ItemAttributes.AttributeData().put(ItemAttributes.stone, 20))
+            );
         }};
 
         oldstone = new DelveOreBlock("oldstone-wall"){{
             variants = 2;
             health = 15;
             crackSprites = 4;
+
+            tileLayers.add(
+                    new TileLayer(health, DelveDropTables.oldstoneDroptable, new ItemAttributes.AttributeData().put(ItemAttributes.stone, 10).put(ItemAttributes.iron, 5))
+            );
         }};
 
         CUT = new DelveOreBlock("CUT"){{

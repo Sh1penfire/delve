@@ -29,6 +29,12 @@ public class ItemConstructors {
     public static ItemState get(String id){
         return idMap.get(id).get(Vars.world, defaultData, 1);
     }
+    public static ItemState get(String id, ItemData data){
+        return idMap.get(id).get(Vars.world, data, 1);
+    }
+    public static ItemState get(String id, ItemData data, float scale){
+        return idMap.get(id).get(Vars.world, data, scale);
+    }
 
     public static WorldModifyable<Prov<ItemState>> constructor(String id){
         return idMap.get(id).constructor;

@@ -21,6 +21,7 @@ import main.items.ItemAttributes.AttributeData;
 import main.items.ItemConstructors;
 import main.items.ItemState;
 import mindustry.Vars;
+import mindustry.game.Team;
 import mindustry.gen.Building;
 import mindustry.gen.Bullet;
 import mindustry.gen.Sounds;
@@ -37,6 +38,8 @@ import mindustry.world.meta.StatUnit;
 import mindustry.world.modules.ItemModule;
 
 import java.util.Iterator;
+
+import static main.data.lootables.DelveDropTables.defaultDroptable;
 
 public class DelveOreBlock extends Block {
 
@@ -56,105 +59,28 @@ public class DelveOreBlock extends Block {
         }
     }
 
-    public static AtributeDropTable defaultDroptable = new AtributeDropTable(){{
-        mainEntry = new AttributeDropTableBase.TableDropEntry(){{
+    public static class TileLayer{
 
-            entries.addAll(
-                    new TableDropEntry(){{
-                        baseline = new AttributeData().put(ItemAttributes.iron, 10).put( ItemAttributes.stone, 10);
+        public TileLayer(){}
 
-                        prefs.add(new MinCostPref(){{
-                            cost.set(baseline);
-                        }});
+        public TileLayer(float health, AttributeDropTableBase dropTable, AttributeData attributes){
+            this.health = health;
+            this.dropTable = dropTable;
+            this.attributes = attributes;
+        }
 
-                        entries.addAll(
-                                new ItemDropEntry(){{
-                                    type = DelveItems.geothite;
+        public float armor;
+        public float health;
+        public AttributeDropTableBase dropTable;
+        public AttributeData attributes;
+    }
 
-                                    prefs.add(new MinCostPref(){{
-                                        cost.put(ItemAttributes.iron, 4).put( ItemAttributes.stone, 4);
-                                    }});
-                                    cost.put(ItemAttributes.iron, 1).put( ItemAttributes.stone, 1);
-                                    minCostScale = 3;
-                                    maxCostScale = 4;
-                                }},
-                                new ItemDropEntry(){{
-
-                                    type = DelveItems.concertumDust;
-
-                                    cost.put(ItemAttributes.iron, 1).put(ItemAttributes.stone, 1);
-                                    minCostScale = 1;
-                                    maxCostScale = 3;
-                                }}
-                        );
-                    }},
-                    new TableDropEntry(){{
-                        prefs.add(new AboveZeroPref(ItemAttributes.stone));
-
-                        entries.addAll(
-                                new ItemDropEntry(){{
-                                    type = DelveItems.stone;
-
-                                    prefs.add(new MinCostPref(){{
-                                        cost.put( ItemAttributes.stone, 8);
-                                    }});
-                                    cost.put( ItemAttributes.stone, 1);
-                                    minCostScale = 8;
-                                    maxCostScale = 12;
-                                }},
-                                new ItemDropEntry(){{
-                                    type = DelveItems.stone;
-
-                                    prefs.add(new MinCostPref(){{
-                                        cost.put( ItemAttributes.stone, 4);
-                                    }});
-                                    cost.put(ItemAttributes.stone, 1);
-                                    minCostScale = 4;
-                                    maxCostScale = 5;
-                                }},
-                                new ItemDropEntry(){{
-                                    type = DelveItems.stoneDust;
-
-                                    cost.put(ItemAttributes.stone, 1);
-                                    minCostScale = 1;
-                                    maxCostScale = 3;
-                                }}
-                        );
-                    }},
-                    new TableDropEntry(){{
-                        prefs.add(new AboveZeroPref(ItemAttributes.iron));
-
-                        entries.addAll(
-                                new ItemDropEntry(){{
-                                    type = DelveItems.rust;
-
-                                    prefs.add(new MinCostPref(){{
-                                        cost.put(ItemAttributes.iron, 4);
-                                    }});
-                                    cost.put(ItemAttributes.iron, 1);
-                                    minCostScale = 3;
-                                    maxCostScale = 4;
-                                }},
-                                new ItemDropEntry(){{
-
-                                    type = DelveItems.rustDust;
-
-                                    cost.put(ItemAttributes.iron, 1);
-                                    minCostScale = 1;
-                                    maxCostScale = 3;
-                                }}
-                        );
-                    }}
-            );
-        }};
-    }};
-
-    public AtributeDropTable dropTable = defaultDroptable;
-    public AttributeData dropAttributes = new AttributeData();
-
+    public Seq<TileLayer> tileLayers = new Seq<>();
     public float flashDecay = 0.25f;
     public float exponentialDecay = 0.92f;
     public boolean mixCol = false;
+
+    public boolean setDefaults = true;
 
     public Sound hitSound = Sounds.rockBreak;
 
@@ -182,6 +108,12 @@ public class DelveOreBlock extends Block {
         allowDerelictRepair = false;
         drawDisabled = false;
         mixCol = true;
+    }
+
+    @Override
+    public void init() {
+        super.init();
+        if(tileLayers.size == 0 && setDefaults) tileLayers.add(new TileLayer(health, defaultDroptable, new AttributeData()));
     }
 
     @Override
@@ -226,13 +158,23 @@ public class DelveOreBlock extends Block {
 
     //regular walls get converted to these when drill blasts hit them.
     public class OreBlockBuild extends Building implements BreakableWallBuilding{
-        public ItemStack[] material;
 
+        public AttributeData dropAttributes;
+        public AttributeDropTableBase dropTable;
+        public float layerArmor;
+
+        public int layersBroken = 0;
 
         TextureRegion baseRegion;
         float rotOffset = 0;
         float hitMag = 0;
         int crackState = 0;
+
+        @Override
+        public Building create(Block block, Team team) {
+            setLayer(tileLayers.get(0));
+            return super.create(block, team);
+        }
 
         @Override
         public void updateTile() {
@@ -248,9 +190,12 @@ public class DelveOreBlock extends Block {
 
         @Override
         public void damage(float damage) {
-            super.damage(damage);
+            float actualDamage = Mathf.maxZero(damage - layerArmor);
+            if(actualDamage <= 0) return;
+
+            super.damage(actualDamage);
             enabled = true;
-            hitTime += damage;
+            hitTime += actualDamage;
             rotOffset = Mathf.random(-15, 15);
             if(crackSprites > 0) {
                 int last = crackState;
@@ -286,7 +231,7 @@ public class DelveOreBlock extends Block {
             Draw.mixcol();
             Draw.color();
 
-            if(crackSprites > 0){
+            if(crackSprites > 0 && crackState > 0){
                 Draw.rect(crackRegions[crackState - 1], x, y, baseRegion.width * sizeScale/4, baseRegion.height * sizeScale/4, offsetRot);
             }
         }
@@ -316,16 +261,36 @@ public class DelveOreBlock extends Block {
 
         @Override
         public void killed() {
-            super.killed();
+            layersBroken++;
+            crackState = 0;
+            recache();
+
             Seq<ItemState> stateList = new Seq<>();
 
             dropTable.get(stateList, dropAttributes, 20);
             Mathf.rand.setSeed(AttributeDropTableBase.rand.seed0);
             stateList.shuffle();
 
+
+            if(layersBroken >= tileLayers.size) {
+                super.killed();
+            }
+            else {
+                TileLayer layer = tileLayers.get(layersBroken);
+
+                setLayer(layer);
+            }
+
             for(ItemState state: stateList){
                 var pile = ItemStatePile.dump(tile.x, tile.y, state);
             }
+        }
+
+        public void setLayer(TileLayer layer){
+            dropTable = layer.dropTable;
+            dropAttributes = layer.attributes;
+            this.maxHealth = this.health = layer.health;
+            layerArmor = layer.armor;
         }
 
         @Override

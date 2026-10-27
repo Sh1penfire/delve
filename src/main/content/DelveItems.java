@@ -12,9 +12,9 @@ import mindustry.type.Item;
 
 public class DelveItems {
 
-    public static DelveItem stone, rust, geothite, malachite, azuritePowder, shadesteel, progenate, oldstone;
+    public static DelveItem stone, rust, geothite, malachite, sekos, shadesteel, progenate, oldstone;
 
-    public static DelveItem stoneDust, oldstoneDust, rustDust, concertumDust;
+    public static DelveItem stoneDust, oldstoneDust, rustDust, geothiteDust, malachiteDust;
 
     public static DelveItem bionorb;
 
@@ -50,20 +50,20 @@ public class DelveItems {
                     put(ItemAttributes.iron, 1);
         }};
 
-        geothite = new DelveItem("concertum", Color.valueOf("9d755d")){{
+        geothite = new DelveItem("geothite", Color.valueOf("9d755d")){{
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 1).
                     put(ItemAttributes.iron, 1);
 
         }};
 
-        malachite = new DelveItem("placithite", Color.valueOf("9d755d")){{
+        malachite = new DelveItem("malachite", Color.valueOf("9d755d")){{
             ItemAttributes.register(this).
                     put(ItemAttributes.stone, 2).
                     put(ItemAttributes.copper, 5);
         }};
 
-        azuritePowder = new DelveItem("glacial-dust", Color.valueOf("d5f5fc")){{
+        sekos = new DelveItem("sekos", Color.valueOf("d5f5fc")){{
             ItemAttributes.register(this).
                     put(ItemAttributes.copper, 1)
                     .put(ItemAttributes.sekos, 1);
@@ -100,8 +100,14 @@ public class DelveItems {
             discrete = false;
         }};
 
-        concertumDust = new DelveItem("concertum-dust", Color.gray){{
+        geothiteDust = new DelveItem("geothite-dust", Color.gray){{
             ItemAttributes.register(this).put(ItemAttributes.iron, 1).put(ItemAttributes.stone, 1);
+
+            discrete = false;
+        }};
+
+        malachiteDust = new DelveItem("malachite-dust", Color.green){{
+            ItemAttributes.register(this).put(ItemAttributes.copper, 1).put(ItemAttributes.stone, 1);
 
             discrete = false;
         }};

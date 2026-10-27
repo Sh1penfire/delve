@@ -1,9 +1,12 @@
 package main.blocks.environment;
 
 import arc.math.Mathf;
+import arc.math.geom.Geometry;
+import arc.math.geom.Point2;
 import arc.scene.ui.layout.Stack;
 import arc.struct.Seq;
 import main.content.blocks.DelveEnvBlocks;
+import mindustry.content.Blocks;
 import mindustry.content.Fx;
 import mindustry.gen.Teamc;
 import mindustry.world.Block;
@@ -36,7 +39,14 @@ public class ItemPile extends Block {
 
     public static boolean dumpItems(int x, int y, ItemStack stack){
         Tile t = Vars.world.tile(x, y);
+
         if(t == null) return false;
+
+        for(int i = 0; i < Geometry.d4.length; i++){
+            Point2 offset = Geometry.d4(i);
+
+        }
+
         Building build = t.build;
 
         if(build == null){
