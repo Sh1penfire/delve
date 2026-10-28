@@ -2,6 +2,8 @@ package main.items;
 
 import arc.graphics.g2d.Draw;
 import arc.struct.ObjectFloatMap;
+import arc.struct.StringMap;
+import arc.util.Nullable;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
 import main.blocks.interfaces.ItemStateHolder;
@@ -54,6 +56,8 @@ public class ItemState implements Cloneable{
 
     //Attributes this item carries
     //Used to understand the composition of an item
+    //Null if this item has no attributes
+    @Nullable
     public ItemAttributes.AttributeData attributes;
 
     public ItemState(Item item) {
@@ -86,7 +90,15 @@ public class ItemState implements Cloneable{
 
     public void draw(){
         Draw.rect(type.getBase().uiIcon, x, y);
-    };
+    }
+
+    public void draw(float x, float y, float width, float height){
+        Draw.rect(type.getBase().uiIcon, x, y, width, height);
+    }
+
+    public void draw(float x, float y, float width, float height, float originX, float originY, float rotation){
+        Draw.rect(type.getBase().uiIcon, x, y, width, height, originX, originY, rotation);
+    }
 
     public String localizedName(){
         return type.getBase().localizedName;

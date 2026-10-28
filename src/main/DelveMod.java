@@ -53,6 +53,7 @@ import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
 import mindustry.mod.*;
 import mindustry.type.ItemStack;
+import mindustry.type.StatusEffect;
 import mindustry.world.Tile;
 import mindustry.world.blocks.ConstructBlock;
 import mindustry.world.blocks.storage.CoreBlock;
@@ -128,7 +129,9 @@ public class DelveMod extends Mod{
 
             Time.run(0, () -> {
                 for(ItemStack stack: requirements){
-                    data.addData(ItemAttributes.get(stack.item), stack.amount);
+                    ItemAttributes.AttributeData asd = ItemAttributes.get(stack.item);
+                    if(asd == null) continue;
+                    data.addData(asd, stack.amount);
                 }
 
                 ItemAttributes.pureMap.each((id, item) -> {
@@ -139,6 +142,11 @@ public class DelveMod extends Mod{
             });
         });
 
+        StatusEffect focus = new StatusEffect("focus"){{
+            disarm = true;
+            buildSpeedMultiplier = 0;
+        }};
+
         Events.run(EventType.Trigger.update, () -> {
             if(!Vars.state.isPlaying()) return;
             cx = Core.input.mouseWorldX();
@@ -148,7 +156,8 @@ public class DelveMod extends Mod{
             source.set(px, py);
             if(Core.input.keyTap(KeyCode.tab)) focusMode = !focusMode;
             if(focusMode && Vars.player.unit() != null){
-                Vars.player.unit().apply(StatusEffects.disarmed, 5);
+                Vars.player.unit().apply(focus, 5);
+
                 if(Core.input.keyTap(KeyCode.mouseLeft) || Core.input.keyDown(KeyCode.mouseLeft) && Core.input.keyDown(KeyCode.controlLeft)){
                     Building build = Vars.world.buildWorld(Core.input.mouseWorldX(), Core.input.mouseWorldY());
                     if(build instanceof ItemStateHolder holder && holder.inventory() != null && Vars.player.unit() instanceof ItemStateHolder inventoryling){

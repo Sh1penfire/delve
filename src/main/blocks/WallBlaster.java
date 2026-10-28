@@ -65,7 +65,7 @@ public class WallBlaster extends Block {
 
                 for(int i = 0; i < range; i++){
                     laserEndpoint.add(dir.x * Vars.tilesize, dir.y * Vars.tilesize);
-                    
+
                     Tile t = Vars.world.tileWorld(laserEndpoint.x, laserEndpoint.y);
 
                     if(t.solid()) {

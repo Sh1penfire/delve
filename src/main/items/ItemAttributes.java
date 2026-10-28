@@ -32,6 +32,10 @@ public class ItemAttributes {
     public static class AttributeData{
         public ObjectFloatMap<String> map = new ObjectFloatMap<>();
 
+        public void clear(){
+            map.clear();
+        }
+
         public void each(AttributeEntry cons){
             map.each(entry -> {
                 cons.get(entry.key, entry.value);
