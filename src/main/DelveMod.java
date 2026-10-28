@@ -126,14 +126,16 @@ public class DelveMod extends Mod{
 
             final ItemAttributes.AttributeData data = new ItemAttributes.AttributeData();
 
-            for(ItemStack stack: requirements){
-                data.addData(ItemAttributes.get(stack.item), stack.amount);
-            }
+            Time.run(0, () -> {
+                for(ItemStack stack: requirements){
+                    data.addData(ItemAttributes.get(stack.item), stack.amount);
+                }
 
-            ItemAttributes.pureMap.each((id, item) -> {
-                float amount = data.idGet(id, 0);
-                if(amount == 0) return;
-                ItemStatePile.dump(e.tile.x, e.tile.y, ItemConstructors.get(item.name, ItemConstructors.defaultData, amount));
+                ItemAttributes.pureMap.each((id, item) -> {
+                    float amount = data.idGet(id, 0);
+                    if(amount == 0) return;
+                    ItemStatePile.dump(e.tile.x, e.tile.y, ItemConstructors.get(item.name, ItemConstructors.defaultData, amount));
+                });
             });
         });
 

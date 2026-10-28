@@ -12,14 +12,13 @@ import main.content.blocks.DelveEnvBlocks;
 import main.graphics.DelveFx;
 import mindustry.Vars;
 import mindustry.content.Blocks;
+import mindustry.content.Fx;
 import mindustry.gen.Building;
 import mindustry.type.Item;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 
 public class WallBlaster extends Block {
-
-    public static ObjectMap<Block, Item> itemDropMap = new ObjectMap<>();
 
     public float reload, range;
 
@@ -32,9 +31,9 @@ public class WallBlaster extends Block {
         reload = 60;
         range = 9;
 
+        solid = true;
         rotate = true;
         quickRotate = false;
-
     }
 
     public class BlasterBuild extends Building{
@@ -48,6 +47,7 @@ public class WallBlaster extends Block {
             return super.damaged();
         }
 
+        static Vec2 laserEndpoint = new Vec2();
         @Override
         public void updateTile() {
 
@@ -58,13 +58,15 @@ public class WallBlaster extends Block {
             if(time >= reload){
                 time = 0;
 
+                laserEndpoint.set(x, y);
                 Point2 dir = Geometry.d4(rotation);
 
                 lastValid = null;
 
                 for(int i = 0; i < range; i++){
-                    Tmp.v1.set(x, y).add(dir.x * i * Vars.tilesize, dir.y * i * Vars.tilesize);
-                    Tile t = Vars.world.tileWorld(Tmp.v1.x, Tmp.v1.y);
+                    laserEndpoint.add(dir.x * Vars.tilesize, dir.y * Vars.tilesize);
+                    
+                    Tile t = Vars.world.tileWorld(laserEndpoint.x, laserEndpoint.y);
 
                     if(t.solid()) {
 
@@ -83,12 +85,13 @@ public class WallBlaster extends Block {
                         if(t.build != null && !t.build.block.underBullets) {
                             t.build.damage(20);
                             DelveFx.hitSpark.at(t.worldx(), t.worldy(), rotation * -90);
-                            DelveFx.blastLine.at(this.x, this.y, rotation * 90, Color.orange, new Vec2(t.worldx(), t.worldy()));
                         }
                         break;
                     }
                     lastValid = t;
                 }
+
+                DelveFx.blastLine.at(this.x, this.y, rotation * 90, Color.orange, new Vec2(laserEndpoint.x, laserEndpoint.y));
             }
         }
 
