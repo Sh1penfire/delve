@@ -15,13 +15,13 @@ public class DelveDistribBlocks {
 
     public static void load(){
         conveyor = new DelveConveyorBlock("highway"){{
-            requirements(Category.distribution, ItemStack.with(DelveItems.crystallineStone, 2));
+            requirements(Category.distribution, ItemStack.with(DelveItems.cryStone, 2));
 
             size = 1;
         }};
 
         grabber = new DelveGrabberBlock("grabber"){{
-            requirements(Category.distribution, ItemStack.with(DelveItems.crystalisedIron, 40));
+            requirements(Category.distribution, ItemStack.with(DelveItems.cryIron, 40));
             size = 3;
             consumePower(DelveBlocks.basePowerConsumption);
         }};

@@ -36,6 +36,7 @@ import main.graphs.ConveyorGraph;
 import main.items.ItemAttributes;
 import main.items.ItemConstructors;
 import main.items.ItemState;
+import main.items.types.DelveItem;
 import main.math.Raycasting;
 import mindustry.Vars;
 import mindustry.content.Fx;
@@ -391,10 +392,6 @@ public class DelveMod extends Mod{
             }
         });
 
-        Vars.content.items().each(item -> {
-            if(!ItemConstructors.idMap.containsKey(item.name)) ItemConstructors.put(item.name, new ItemConstructors.VanillaEntry(item));
-        });
-
         DelvePlayerUnits.load();
         DelveAspects.load();
         DelveItems.load();
@@ -408,6 +405,15 @@ public class DelveMod extends Mod{
 
         VanillaCostModifier.load();
         //I touched intelij today :D
+
+        Events.run(EventType.ClientLoadEvent.class, () -> {
+            Vars.content.items().each(item -> {
+                if(!ItemConstructors.idMap.containsKey(item.name)) {
+                    ItemConstructors.put(item.name, new ItemConstructors.VanillaEntry(item));
+                    ItemConstructors.typeMap.put(item.name, DelveItems.adapterItem);
+                }
+            });
+        });
     }
 
     //TODO: add modifiers onto the item type
@@ -445,6 +451,7 @@ public class DelveMod extends Mod{
                 "main.blocks.debug",
                 "main.blocks.interfaces",
                 "main.content",
+                "main.content.units",
                 "main.content.blocks",
                 "main.world",
                 "main.fluid",

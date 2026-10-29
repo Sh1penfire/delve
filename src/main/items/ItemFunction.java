@@ -1,6 +1,8 @@
 package main.items;
 
+import arc.struct.ObjectMap;
 import main.content.DelveItems;
+import main.items.types.ItemType;
 
 public abstract class ItemFunction {
 
@@ -11,22 +13,17 @@ public abstract class ItemFunction {
 
     public static class CrushingItemFunction extends ItemFunction{
 
+        public static ObjectMap<ItemType, ItemType> crushingMap = new ObjectMap<ItemType, ItemType>();
+
         @Override
         public ItemState process(ItemState input) {
             ItemState output = input;
 
-            if(input.type.getModified(input.inventory) == DelveItems.malachite){
-                output = ItemConstructors.get(DelveItems.sekos.name);
+            ItemType out = crushingMap.get(input.type.getModified(input.inventory));
+            if(out != null){
+                output = ItemConstructors.get(out.item(input).name);
             }
-            if(input.type.getModified(input.inventory) == DelveItems.geothite){
-                output = ItemConstructors.get(DelveItems.geothiteDust.name);
-            }
-            if(input.type.getModified(input.inventory) == DelveItems.stone){
-                output = ItemConstructors.get(DelveItems.stoneDust.name);
-            }
-            if(input.type.getModified(input.inventory) == DelveItems.oldstone){
-                output = ItemConstructors.get(DelveItems.oldstoneDust.name);
-            }
+
             output.mass.setBase(input.mass.getModified(input.inventory));
             output.volume.setBase(input.volume.getModified(input.inventory));
 

@@ -197,7 +197,7 @@ public class ItemStatePile extends Block{
 
             inventory.each(state -> {
                 stackOffset++;
-                state.draw();
+                state.type.getModified(inventory).draw(state, state.x, state.y);
             });
         }
 
@@ -231,12 +231,12 @@ public class ItemStatePile extends Block{
 
                 inventory.each(item -> {
                     i++;
-                    Image image = new Image(item.type.getModified(inventory).uiIcon);
+                    Image image = new Image(item.type.getModified(inventory).item(item).fullIcon);
                     image.rotateBy(imageoffset);
                     images.add(image);
 
                     imageoffset += 15;
-                    itemName = item.localizedName();
+                    itemName = item.type.getModified(inventory).localizedName(item);
                 });
                 t.table(itemTable -> {
 

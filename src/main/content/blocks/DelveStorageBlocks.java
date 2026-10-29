@@ -19,7 +19,7 @@ public class DelveStorageBlocks {
                 fogRadius = 10;
             }
             {
-            requirements(Category.effect, ItemStack.with(DelveItems.crystalisedCopper, 500, DelveItems.crystalisedIron, 800));
+            requirements(Category.effect, ItemStack.with(DelveItems.cryCopper, 500, DelveItems.cryIron, 800));
             size = 3;
             health = 800;
             unitType = DelvePlayerUnits.picker;

@@ -21,6 +21,7 @@ import main.io.ModdedTypeIO;
 import main.items.Inventory;
 import main.items.ItemAttributes;
 import main.items.ItemState;
+import main.items.ItemTags;
 import main.type.TimeString;
 import main.ui.GrinderBar;
 import mindustry.Vars;
@@ -47,6 +48,8 @@ public class DelveCoreBlock extends CoreBlock {
     public float conversionRate = 1/60f;
 
     public float crystallineCost = 5;
+
+    public float dustSpeedMulti = 5;
 
     public class DelveCoreBuild extends CoreBuild implements ItemStateHolder{
 
@@ -85,11 +88,13 @@ public class DelveCoreBlock extends CoreBlock {
 
         public void updateConversion(){
             if(converting){
-                if(inventory.bottom() == null) {
+                ItemState bottomState = inventory.bottom();
+                if(bottomState == null) {
                     converting = false;
                     return;
                 }
-                currentVol = inventory.bottom().volume.getModified(inventory);
+                currentVol = bottomState.volume.getModified(inventory);
+                if(bottomState.hasTag(ItemTags.dust)) currentVol /= dustSpeedMulti;
                 convertTimer += edelta() * conversionRate;
                 if(convertTimer >= currentVol){
                     convertTimer -= currentVol;
@@ -98,6 +103,27 @@ public class DelveCoreBlock extends CoreBlock {
             }
         }
 
+        public void liquidate(ItemState state, float multi){
+
+            removeState(state);
+
+            float multiplier = state.mass.getModified(state.inventory) * multi;
+
+            if(state.attributes != null) state.attributes.each((attrId, value) -> {
+                Item item = ItemAttributes.pureMap.get(attrId);
+                if(item == null) return;
+
+                data.idAdd(attrId, value * multiplier);
+            });
+
+            data.each((attrId, value) -> {
+                while (value >= crystallineCost){
+                    value -= crystallineCost;
+                    items.add(ItemAttributes.pureMap.get(attrId), 1);
+                }
+                data.idPut(attrId, value);
+            });
+        }
 
         public void convertAttributes(){
 
@@ -107,29 +133,15 @@ public class DelveCoreBlock extends CoreBlock {
                 return;
             }
 
-            removeState(state);
-
-            float multiplier = state.mass.getModified(state.inventory);
-
-            if(state.attributes != null) state.attributes.each((attrId, value) -> {
-                Item item = ItemAttributes.pureMap.get(attrId);
-                if(item == null) return;
-
-                data.idAdd(attrId, value * multiplier);
-                if(data.idGet(attrId, 0) >= crystallineCost) converting = true;
-            });
-
-            data.each((attrId, value) -> {
-                if(value >= crystallineCost){
-                    value -= crystallineCost;
-                    items.add(ItemAttributes.pureMap.get(attrId), 1);
-                }
-                data.idPut(attrId, value);
-            });
+            liquidate(state, 1);
         }
 
         @Override
         public void handleState(ItemState state) {
+            if(state.getTags().contains(ItemTags.crystalline)){
+                liquidate(state, crystallineCost);
+                return;
+            }
             ItemStateHolder.super.handleState(state);
             converting = true;
         }
@@ -185,6 +197,10 @@ public class DelveCoreBlock extends CoreBlock {
                 t.label(() -> {
                     ETT = 0;
                     inventory.each(state -> {
+                        if(state.hasTag(ItemTags.dust)) {
+                            ETT += state.volume.getModified(inventory) / dustSpeedMulti;
+                            return;
+                        }
                         ETT += state.volume.getModified(inventory);
                     });
                     ETT = ETT/conversionRate/60f;

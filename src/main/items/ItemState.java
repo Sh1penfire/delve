@@ -8,6 +8,7 @@ import arc.util.io.Reads;
 import arc.util.io.Writes;
 import main.blocks.interfaces.ItemStateHolder;
 import main.data.InventoryModifyable;
+import main.items.types.ItemType;
 import mindustry.entities.abilities.Ability;
 import mindustry.io.TypeIO;
 import mindustry.type.Item;
@@ -15,12 +16,17 @@ import mindustry.type.Item;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * An item state. Only stores info, not responsible for updating it. <br>
+ * Classes implementing {@link ItemType} are responsible for updating and drawing <br>
+ * {@link main.items.types.AdapterItem} is used as the type for when there isn't a parent item type found.
+ */
 public class ItemState implements Cloneable{
 
     /**
      * The type of item this is, used mainly for drawing and crafting with specific material types
      */
-    public InventoryModifyable<Item> type;
+    public InventoryModifyable<ItemType> type;
 
     /**
      * The entity that this is being kept inside.<br>
@@ -54,11 +60,16 @@ public class ItemState implements Cloneable{
     //Position in the world
     public float x, y;
 
-    //Data specific to this item that it carries
-    public ObjectFloatMap<String> data;
+    //Numerical data specific to this item that it carries that doesn't fall into the existing fields. Used specifically for floats.
+    public ObjectFloatMap<String> floatData = new ObjectFloatMap<>();
 
     //The tags this item carries with it. Ex: crystalline, ingot, etc...
     private final ObjectSet<String> tags = new ObjectSet<>();
+
+    //Generalised data map. Used for non float and tag values.
+    //Ex: Internal inventories, items,
+    public ObjectMap<String, Object> data = new ObjectMap<>();
+
 
     //Attributes this item carries
     //Used to understand the composition of an item
@@ -66,13 +77,19 @@ public class ItemState implements Cloneable{
     @Nullable
     public ItemAttributes.AttributeData attributes;
 
-    public ItemState(Item item) {
+    public ItemState(ItemType item) {
         type = new InventoryModifyable<>(item);
         volume.setBase(1f);
         mass.setBase(1f);
     }
 
-    public ItemState(){}
+    public void draw(){
+        type.getModified(inventory).draw(this, x, y);
+    }
+
+    public void update(){
+        type.getModified(inventory).update(this);
+    }
 
     //Attempt to combine the two states. Return if the other state should be consumed
     public boolean combine(ItemState other){
@@ -91,25 +108,6 @@ public class ItemState implements Cloneable{
     public boolean canCombine(ItemState other){
         return type.getModified(inventory) == other.type.getModified(other.inventory) && !discrete.getModified(inventory) && !other.discrete.getModified(other.inventory);
     }
-
-    public void update(){};
-
-    public void draw(){
-        Draw.rect(type.getBase().uiIcon, x, y);
-    }
-
-    public void draw(float x, float y, float width, float height){
-        Draw.rect(type.getBase().uiIcon, x, y, width, height);
-    }
-
-    public void draw(float x, float y, float width, float height, float originX, float originY, float rotation){
-        Draw.rect(type.getBase().uiIcon, x, y, width, height, originX, originY, rotation);
-    }
-
-    public String localizedName(){
-        return type.getBase().localizedName;
-    }
-
 
     /**
      * Density of the item. Measured in u/v<br>
@@ -150,33 +148,32 @@ public class ItemState implements Cloneable{
     }
 
     public void read(Reads read){
-        type.setBase(TypeIO.readItem(read));
+        type.setBase(ItemConstructors.typeMap.get(TypeIO.readItem(read).name));
         x = read.f();
         y = read.f();
         volume.setBase(read.f());
         boolean customData = read.bool();
 
         if(customData){
-            data = new ObjectFloatMap<>();
+            floatData = new ObjectFloatMap<>();
             int dataSize = read.i();
 
             for (int i = 0; i < dataSize; i++) {
-                data.put(read.str(), read.f());
+                floatData.put(read.str(), read.f());
             }
         }
-        else data = ItemAttributes.get(type.getBase()).map;
     }
 
     public void write(Writes write){
-        TypeIO.writeItem(write, type.getBase());
+        TypeIO.writeItem(write, type.getBase().item(this));
         write.f(x);
         write.f(y);
         write.f(volume.getBase());
 
-        write.bool(data != null);
-        if(data != null) {
-            write.i(data.size);
-            data.each(d -> {
+        write.bool(floatData != null);
+        if(floatData != null) {
+            write.i(floatData.size);
+            floatData.each(d -> {
                 write.str(d.key);
                 write.f(d.value);
             });
@@ -199,9 +196,8 @@ public class ItemState implements Cloneable{
         state.mass = new InventoryModifyable<>(mass.getBase());
         state.volume = new InventoryModifyable<>(volume.getBase());
         state.discrete = new InventoryModifyable<>(discrete.getBase());
-        if(data != null) {
-            state.data = new ObjectFloatMap<>();
-            state.data.set(data);
+        if(floatData != null) {
+            state.floatData = floatData.copy();
         }
 
         return state;

@@ -3,10 +3,12 @@ package main.items;
 import arc.func.Prov;
 import arc.struct.ObjectFloatMap;
 import arc.struct.ObjectMap;
-import arc.util.Log;
+import arc.struct.ObjectSet;
 import arc.util.Nullable;
+import main.content.DelveItems;
 import main.data.WorldModifyable;
 import main.items.types.DelveItem;
+import main.items.types.ItemType;
 import mindustry.Vars;
 import mindustry.core.World;
 import mindustry.type.Item;
@@ -24,6 +26,9 @@ public class ItemConstructors {
 
     //Entries for the item states
     public static HashMap<String, BaseEntry> idMap = new HashMap<>();
+
+    //Map of item id to item type. This exists soley because I want my mod to be semi functional with vanilla items but I *really* question the necessity of it yet I have a morbid curiosity to see what will happen if I do this
+    public static ObjectMap<String, ItemType> typeMap = new ObjectMap<>();
 
     //Get a new item state instantiated by the ascociated entry
     public static ItemState get(String id){
@@ -67,13 +72,13 @@ public class ItemConstructors {
 
         //Data which gets passed onto the item state
         @Nullable
-        public ObjectFloatMap<String> stateData;
+        public ObjectFloatMap<String> floatData;
     }
 
-    public abstract static class BaseEntry<T extends ItemState>{
+    public abstract static class BaseEntry{
 
         //Used to reset the current state.
-        public WorldModifyable<Prov<T>> constructor;
+        public WorldModifyable<Prov<ItemState>> constructor;
 
         public abstract ItemState get(World context, ItemData data, float scale);
 
@@ -83,35 +88,45 @@ public class ItemConstructors {
         }
     }
 
-    public static class VanillaEntry extends BaseEntry<ItemState>{
+    public static class VanillaEntry extends BaseEntry{
+
+        Item parrentItem;
+
         public VanillaEntry(Item item){
-            constructor = new WorldModifyable<>(() -> new ItemState(item));
+            parrentItem = item;
+            constructor = new WorldModifyable<>(() -> new ItemState(DelveItems.adapterItem));
         }
 
         @Override
         public ItemState get(World context, ItemData data, float scale) {
             ItemState state = constructor.getModified(Vars.world).get();
             state.mass.setBase(data.mass * scale);
-            state.mass.setBase(data.volume * scale);
-            if(data.stateData != null) state.data.set(data.stateData);
+            state.volume.setBase(data.volume * scale);
+            if(data.floatData != null) state.floatData.set(data.floatData);
+            state.data.put("parent-item", parrentItem);
+
             return state;
         }
     }
 
-    public static class ConstructorEntry extends BaseEntry<ItemState> {
+    public static class ConstructorEntry extends BaseEntry {
 
-        public ConstructorEntry(DelveItem parrent, Prov<ItemState> prov){
+        public ConstructorEntry(DelveItem parent, Prov<ItemState> prov){
             constructor = new WorldModifyable<>(prov);
-            type = new WorldModifyable<>(parrent);
+            type = new WorldModifyable<>(parent);
 
-            discrete = new WorldModifyable<>(parrent.discrete);
+            discrete = new WorldModifyable<>(parent.discrete);
 
-            attributes = new WorldModifyable<>(ItemAttributes.get(parrent));
+            tags = new WorldModifyable<>(parent.tags);
+
+            attributes = new WorldModifyable<>(ItemAttributes.get(parent));
         }
 
         public WorldModifyable<DelveItem> type;
 
         public WorldModifyable<ItemAttributes.AttributeData> attributes;
+
+        public WorldModifyable<ObjectSet<String>> tags;
 
         public WorldModifyable<Boolean> discrete;
 
@@ -126,7 +141,8 @@ public class ItemConstructors {
 
             state.mass.setBase(data.mass * scale);
             state.volume.setBase(data.volume * scale);
-            if(data.stateData != null) state.data.set(data.stateData);
+            if(data.floatData != null) state.floatData.set(data.floatData);
+            state.setTags(tags.getModified(Vars.world));
 
             return state;
         }

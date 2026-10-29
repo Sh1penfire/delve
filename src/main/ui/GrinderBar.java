@@ -127,7 +127,7 @@ public class GrinderBar extends Bar {
 
                 offset = 0;
                 inventory.each(state -> {
-                    state.draw(x + offset + startGap * height + height/2f, y + height/2f, height, height);
+                    state.type.getModified(inventory).draw(state, x + offset + startGap * height + height/2f, y + height/2f, height, height);
                     offset += height;
                 });
 
@@ -140,7 +140,7 @@ public class GrinderBar extends Bar {
 
                 offset = 0;
                 inventory.each(state -> {
-                    state.draw(x + offset + startGap * height + height/2f, y + height/2f, height, height);
+                    state.type.getModified(inventory).draw(state, x + offset + startGap * height + height/2f, y + height/2f, height, height);
                     offset += height;
                 });
 

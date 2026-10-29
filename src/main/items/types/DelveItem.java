@@ -7,9 +7,11 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.math.Mathf;
 import arc.struct.ObjectFloatMap;
+import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Nullable;
 import main.data.Modifyable;
+import main.items.Inventory;
 import main.items.ItemConstructors;
 import main.meta.MeldStats;
 import main.items.ItemAttributes;
@@ -19,7 +21,7 @@ import mindustry.game.EventType;
 import mindustry.graphics.Layer;
 import mindustry.type.Item;
 
-public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item {
+public class DelveItem extends Item implements ItemType {
 
     public DelveItem(String name) {
         this(name, new Color(Color.black));
@@ -42,6 +44,8 @@ public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item
     //Whether or not the item can combine, or it comes in discrete packets that can't combine
     public boolean discrete = true;
 
+    public ObjectSet<String> tags = new ObjectSet<>();
+
     public Prov<ItemState> constructor = () -> new ItemState(this);
 
     @Override
@@ -55,6 +59,7 @@ public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item
         super.init();
 
         ItemConstructors.put(name, new ItemConstructors.ConstructorEntry(this, constructor));
+        ItemConstructors.typeMap.put(name, this);
 
         if(altNames > 0){
             namesList = new String[altNames];
@@ -73,5 +78,15 @@ public class DelveItem<T extends ItemConstructors.ConstructorEntry> extends Item
     public void postInit() {
         super.postInit();
         if(postInitRunnable != null) postInitRunnable.run();
+    }
+
+    @Override
+    public void update(ItemState state) {
+
+    }
+
+    @Override
+    public Item item(ItemState state) {
+        return this;
     }
 }

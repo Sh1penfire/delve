@@ -130,6 +130,7 @@ public class ItemAttributes {
         stone = new ItemAttribute("stone"),
         iron = new ItemAttribute("iron"),
         copper = new ItemAttribute("copper"),
+        carbon = new ItemAttribute("carbon"),
         biochem = new ItemAttribute("biochem"),
         sekos = new ItemAttribute("sekos"),
         ice = new ItemAttribute("ice");

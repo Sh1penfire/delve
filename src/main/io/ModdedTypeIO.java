@@ -45,7 +45,7 @@ public class ModdedTypeIO {
     public static void writeStates(Writes writes, Seq<ItemState> states){
         writes.i(states.size);
         states.each(s -> {
-            writes.i(s.type.getBase().id);
+            TypeIO.writeItem(writes, s.type.getBase().item(s));
             s.write(writes);
         });
     }
@@ -59,7 +59,7 @@ public class ModdedTypeIO {
         int size = read.i();
 
         for(int i = 0; i < size; i++){
-            ItemState entry = ItemConstructors.get(Vars.content.item(read.i()).name);
+            ItemState entry = ItemConstructors.get(TypeIO.readItem(read).name);
             entry.read(read);
             states.add(entry);
         }
@@ -76,7 +76,7 @@ public class ModdedTypeIO {
 
         writes.i(inventory.states.size);
         inventory.states.each(s -> {
-            writes.i(s.type.getBase().id);
+            TypeIO.writeItem(writes, s.type.getBase().item(s));
             s.write(writes);
         });
     }

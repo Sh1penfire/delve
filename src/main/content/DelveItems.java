@@ -1,16 +1,16 @@
 package main.content;
 
 import arc.graphics.Color;
-import main.items.types.AttributeItem;
-import main.items.types.DelveItem;
-import main.items.types.SpoilageItem;
+import main.items.ItemTags;
+import main.items.types.*;
 import main.meta.MeldStats;
 import main.items.ItemAttributes;
 import mindustry.Vars;
-import mindustry.content.Items;
 import mindustry.type.Item;
 
 public class DelveItems {
+
+    public static AdapterItem adapterItem;
 
     public static DelveItem stone, rust, geothite, malachite, sekos, shadesteel, progenate, oldstone;
 
@@ -20,13 +20,19 @@ public class DelveItems {
 
     public static Item[] propulites;
 
-    public static AttributeItem crystallineStone, crystalisedIron, crystalisedCopper;
+    public static AttributeItem cryCarbon, cryStone, cryIron, cryCopper;
+
+    public static DustItem cryCarbonDust, cryStoneDust, cryIronDust, cryCopperDust, bionorbDust;
 
     public static void load(){
+        //Internal
+        adapterItem = new AdapterItem("adapter");
+
         //Crystalline Items
-        crystalisedIron = new AttributeItem("crystalline-iron", ItemAttributes.iron);
-        crystalisedCopper = new AttributeItem("crystalline-copper", ItemAttributes.copper);
-        crystallineStone = new AttributeItem("crystalline-stone", ItemAttributes.stone);
+        cryIron = new AttributeItem("crystalline-iron", ItemAttributes.iron);
+        cryCopper = new AttributeItem("crystalline-copper", ItemAttributes.copper);
+        cryStone = new AttributeItem("crystalline-stone", ItemAttributes.stone);
+        cryCarbon = new AttributeItem("crystalline-carbon", ItemAttributes.carbon);
 
         bionorb = new SpoilageItem("bionorb"){{
             ItemAttributes.register(this).put(ItemAttributes.biochem, 1);
@@ -63,6 +69,9 @@ public class DelveItems {
                     put(ItemAttributes.copper, 5);
         }};
 
+
+        //Dusts
+
         sekos = new DelveItem("sekos", Color.valueOf("d5f5fc")){{
             ItemAttributes.register(this).
                     put(ItemAttributes.copper, 1)
@@ -70,47 +79,25 @@ public class DelveItems {
             altNamePrefix = "blue-dust";
             altNames = 9;
 
-            discrete = false;
-        }};
-
-
-        //Dusts
-        stoneDust = new DelveItem("rubble-dust", Color.gray){{
-            postInitRunnable = () -> {
-            };
-            ItemAttributes.register(this).
-                    put(ItemAttributes.stone, 1);
+            tags.add(ItemTags.dust);
 
             discrete = false;
         }};
 
-        oldstoneDust = new DelveItem("oldstone-dust", Color.gray){{
-            postInitRunnable = () -> {
-            };
-            ItemAttributes.register(this).
-                    put(ItemAttributes.stone, 0.5f)
-                    .put(ItemAttributes.iron, 0.25f);
+        //Dust
+        stoneDust = createDust("rubble", stone);
+        oldstoneDust = createDust("oldstone", oldstone);
+        rustDust = createDust("rust", rust);
+        geothiteDust = createDust("geothite", geothite);
+        malachiteDust = createDust("malachite", malachite);
 
-            discrete = false;
-        }};
+        //Crystalline Dusts
+        cryCarbonDust = crystalDust("crystalline-carbon", cryCarbon);
+        cryCarbonDust = crystalDust("crystalline-stone", cryStone);
+        cryIronDust = crystalDust("crystalline-iron", cryIron);
+        cryCopperDust = crystalDust("crystalline-copper", cryCopper);
+        bionorbDust = crystalDust("bionorb", bionorb);
 
-        rustDust = new DelveItem("rust-dust", Color.gray){{
-            ItemAttributes.register(this).put(ItemAttributes.iron, 1);
-
-            discrete = false;
-        }};
-
-        geothiteDust = new DelveItem("geothite-dust", Color.gray){{
-            ItemAttributes.register(this).put(ItemAttributes.iron, 1).put(ItemAttributes.stone, 1);
-
-            discrete = false;
-        }};
-
-        malachiteDust = new DelveItem("malachite-dust", Color.green){{
-            ItemAttributes.register(this).put(ItemAttributes.copper, 1).put(ItemAttributes.stone, 1);
-
-            discrete = false;
-        }};
 
         //Refined
         shadesteel = new DelveItem("shadesteel", Color.valueOf("9d755d")){{
@@ -124,6 +111,15 @@ public class DelveItems {
         Vars.content.items().each(i -> {
             if(ItemAttributes.get(i) != null) MeldStats.itemAttributes(i, i.stats);
         });
+    }
+
+    public static DustItem createDust(String name, DelveItem delveItem){
+        return new DustItem(name + "-dust", delveItem);
+    }
+    public static DustItem crystalDust(String name, DelveItem delveItem){
+        return new DustItem(name + "-dust", delveItem){{
+            tags.add(ItemTags.crystalline);
+        }};
     }
 
     //Not sure if ill be using this but just to get it in for the day

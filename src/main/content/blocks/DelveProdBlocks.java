@@ -19,17 +19,18 @@ public class DelveProdBlocks {
 
     public static void load(){
         blaster = new WallBlaster("blaster"){{
-            requirements(Category.production, ItemStack.with(DelveItems.crystalisedIron, 10, DelveItems.crystalisedCopper, 10));
+            requirements(Category.production, ItemStack.with(DelveItems.cryIron, 10, DelveItems.cryCopper, 10));
             consumePower(basePowerConsumption);
         }};
 
         crusher = new RecipeCrafter("crusher"){{
-            requirements(Category.production, ItemStack.with(DelveItems.crystalisedIron, 10, DelveItems.crystalisedCopper, 10));
+            size = 3;
+            requirements(Category.production, ItemStack.with(DelveItems.cryIron, 50, DelveItems.cryCopper, 20));
             consumePower(basePowerConsumption * 4);
         }};
 
         lidar = new Lidar("lidar"){{
-            requirements(Category.effect, ItemStack.with(DelveItems.crystalisedIron, 10, DelveItems.crystalisedCopper, 10));
+            requirements(Category.effect, ItemStack.with(DelveItems.cryIron, 10, DelveItems.cryCopper, 10));
             consumePower(basePowerConsumption * 4);
         }};
     }
