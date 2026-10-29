@@ -1,8 +1,8 @@
 package main.items;
 
 import arc.graphics.g2d.Draw;
-import arc.struct.ObjectFloatMap;
-import arc.struct.StringMap;
+import arc.struct.*;
+import arc.util.Eachable;
 import arc.util.Nullable;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
@@ -11,6 +11,9 @@ import main.data.InventoryModifyable;
 import mindustry.entities.abilities.Ability;
 import mindustry.io.TypeIO;
 import mindustry.type.Item;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ItemState implements Cloneable{
 
@@ -53,6 +56,9 @@ public class ItemState implements Cloneable{
 
     //Data specific to this item that it carries
     public ObjectFloatMap<String> data;
+
+    //The tags this item carries with it. Ex: crystalline, ingot, etc...
+    private final ObjectSet<String> tags = new ObjectSet<>();
 
     //Attributes this item carries
     //Used to understand the composition of an item
@@ -122,6 +128,27 @@ public class ItemState implements Cloneable{
         return inventory.isAdded();
     }
 
+    public ObjectSet<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Eachable<String> map) {
+        tags.clear();
+        map.each(tags::add);
+    }
+
+    public boolean hasTag(String id){
+        return tags.contains(id);
+    }
+
+    public void putTag(String id){
+        tags.add(id);
+    }
+
+    public void removeTag(String id){
+        tags.remove(id);
+    }
+
     public void read(Reads read){
         type.setBase(TypeIO.readItem(read));
         x = read.f();
@@ -158,7 +185,7 @@ public class ItemState implements Cloneable{
 
     public ItemState copy(){
         try{
-            return (ItemState) clone();
+            return clone();
         }catch(CloneNotSupportedException e){
             //I am disbrusted
             throw new RuntimeException("java sucks", e);

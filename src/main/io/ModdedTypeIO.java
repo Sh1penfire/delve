@@ -4,11 +4,31 @@ import arc.struct.Seq;
 import arc.util.io.Reads;
 import arc.util.io.Writes;
 import main.items.Inventory;
+import main.items.ItemAttributes;
 import main.items.ItemConstructors;
 import main.items.ItemState;
 import mindustry.Vars;
+import mindustry.io.TypeIO;
 
 public class ModdedTypeIO {
+
+    public static ItemAttributes.AttributeData readAttributes(Reads read){
+        ItemAttributes.AttributeData data = new ItemAttributes.AttributeData();
+        int size = read.i();
+        for (int i = 0; i < size; i++) {
+            data.idPut(read.str(), read.f());
+        }
+        return data;
+    }
+
+    public static void writeAttributes(Writes write, ItemAttributes.AttributeData data){
+        write.i(data.map.size);
+        data.each((attrId, value) -> {
+            write.str(attrId);
+            write.f(value);
+        });
+    }
+
     public static Seq<ItemState> readStates(Reads read){
         Seq<ItemState> states = new Seq<>();
         int size = read.i();

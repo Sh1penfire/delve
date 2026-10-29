@@ -11,7 +11,7 @@ author: "Sh1p"
 main: "main.DelveMod"
 
 #the mod description as seen in the mod dialog
-description: "Your Ex is a planet.\n\nHe needs to be terminated."
+description: "[[]accent]This mod is heavly indev and replaces certain core systems like the unit-wall collision object Vars.collisions.\nIf you experience crashes, please comfirm if they're the result of this mod or a different mod. Thanks![[]]\n\nYour Ex is a planet.\n\nHe needs to be terminated."
 
 #the mod version
 version: 2.30843697339e+71 (54!)

@@ -1,15 +1,29 @@
 package main.items;
 
+import arc.struct.IntMap;
 import arc.struct.ObjectFloatMap;
 import arc.struct.ObjectMap;
+import arc.struct.Seq;
 import mindustry.type.Item;
 
+import java.util.HashMap;
+
 public class ItemAttributes {
+
+    static Seq<ItemAttribute> attributes = new Seq<>();
+
+    //Setup dynamically
+    static ObjectMap<String, ItemAttribute> idMap = new ObjectMap<>();
 
     public static ObjectMap<Item, AttributeData> map = new ObjectMap<>();
 
     //Map of each item attribute's id to an item
     public static ObjectMap<String, Item> pureMap = new ObjectMap<>();
+
+    public static void register(ItemAttribute attribute){
+        attributes.add(attribute);
+        idMap.put(attribute.name, attribute);
+    }
 
     public static AttributeData register(Item item){
         AttributeData data = new AttributeData();
@@ -30,7 +44,12 @@ public class ItemAttributes {
     }
 
     public static class AttributeData{
+
         public ObjectFloatMap<String> map = new ObjectFloatMap<>();
+
+        public AttributeData(){
+
+        }
 
         public void clear(){
             map.clear();
@@ -92,9 +111,11 @@ public class ItemAttributes {
         void get(String id, float value);
     }
 
+    //The actual item attribute class used to create attributes
     public static class ItemAttribute{
         public ItemAttribute(String id){
             this.name = id;
+            register(this);
         }
 
         public String name;

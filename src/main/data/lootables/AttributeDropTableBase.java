@@ -15,7 +15,7 @@ import mindustry.type.Item;
  */
 public abstract class AttributeDropTableBase {
 
-    public static ItemAttributes.AttributeData attrs = new ItemAttributes.AttributeData();
+    private static final ItemAttributes.AttributeData attrs = new ItemAttributes.AttributeData();
 
     //Set the seed of the attribute drop table's rand when querying for deterministic drops!
     public static Rand rand = new Rand();

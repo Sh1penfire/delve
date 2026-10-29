@@ -56,18 +56,16 @@ import mindustry.type.ItemStack;
 import mindustry.type.StatusEffect;
 import mindustry.world.Tile;
 import mindustry.world.blocks.ConstructBlock;
-import mindustry.world.blocks.storage.CoreBlock;
 import rhino.ImporterTopLevel;
 import rhino.NativeJavaPackage;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 public class DelveMod extends Mod{
     public static NativeJavaPackage p = null;
 
     public DelveMod(){
         EnergyField.init();
+        Log.info("PAPYRUSSSSSSSSSSSSSSSSSS");
     }
 
     float dx, dy;
